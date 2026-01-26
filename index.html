@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Contratos</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Controle de Contratos
+                </div>
+                <nav class="nav">
+                    <button class="nav-btn active" data-section="dashboard">Dashboard</button>
+                    <button class="nav-btn" data-section="fornecedores">Fornecedores</button>
+                    <button class="nav-btn" data-section="contratos">Contratos</button>
+                    <button class="nav-btn" data-section="relatorio">Relat&oacute;rio Mensal</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Dashboard Section -->
+            <section id="section-dashboard" class="section active">
+                <div class="section-header">
+                    <h1 class="section-title">Dashboard</h1>
+                    <div>
+                        <button class="btn btn-secondary" onclick="App.exportData()">Exportar</button>
+                        <button class="btn btn-secondary" onclick="App.importData()">Importar</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="stat-card warning">
+                        <span class="stat-value" id="stat-pendentes">0</span>
+                        <span class="stat-label">NFs Pendentes (este m&ecirc;s)</span>
+                    </div>
+                    <div class="stat-card danger">
+                        <span class="stat-value" id="stat-atrasadas">0</span>
+                        <span class="stat-label">NFs Atrasadas</span>
+                    </div>
+                    <div class="stat-card info">
+                        <span class="stat-value" id="stat-fornecedores">0</span>
+                        <span class="stat-label">Fornecedores</span>
+                    </div>
+                    <div class="stat-card success">
+                        <span class="stat-value" id="stat-contratos">0</span>
+                        <span class="stat-label">Contratos Ativos</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">NFs Atrasadas</h2>
+                        </div>
+                        <div class="list" id="lista-atrasadas">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">NFs Pendentes</h2>
+                        </div>
+                        <div class="list" id="lista-pendentes">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fornecedores Section -->
+            <section id="section-fornecedores" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Fornecedores</h1>
+                    <button class="btn btn-primary" onclick="App.openFornecedorModal()">
+                        + Novo Fornecedor
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="list" id="lista-fornecedores">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contratos Section -->
+            <section id="section-contratos" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Contratos</h1>
+                    <button class="btn btn-primary" onclick="App.openContratoModal()">
+                        + Novo Contrato
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div id="lista-contratos">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Relat&oacute;rio Mensal Section -->
+            <section id="section-relatorio" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Relat&oacute;rio Mensal</h1>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label class="filter-label">Fornecedor:</label>
+                        <select class="form-select" id="filter-fornecedor" onchange="App.applyFilter()" style="width: 200px;">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="table">
+                        <thead id="relatorio-thead">
+                            <!-- Preenchido via JS -->
+                        </thead>
+                        <tbody id="relatorio-tbody">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 12px;">
+                    Clique nas c&eacute;lulas de status para alternar entre: Pendente &rarr; OK &rarr; Atrasada &rarr; Atualizar Contrato
+                </p>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Fornecedor -->
+    <div id="modal-fornecedor" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-fornecedor-title">Novo Fornecedor</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-fornecedor">
+                    <div class="form-group">
+                        <label class="form-label" for="input-fornecedor-nome">Nome do Fornecedor *</label>
+                        <input type="text" class="form-input" id="input-fornecedor-nome" placeholder="Ex: DI2S" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-fornecedor')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Contrato -->
+    <div id="modal-contrato" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-contrato-title">Novo Contrato</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-contrato">
+                    <div class="form-group">
+                        <label class="form-label" for="select-contrato-fornecedor">Fornecedor *</label>
+                        <select class="form-select" id="select-contrato-fornecedor" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="input-contrato-numero">N&uacute;mero do Contrato *</label>
+                            <input type="number" class="form-input" id="input-contrato-numero" placeholder="Ex: 310" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-contrato-estabelecimento">Estabelecimento</label>
+                            <input type="number" class="form-input" id="input-contrato-estabelecimento" placeholder="Ex: 1" value="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-contrato-observacao">Observa&ccedil;&atilde;o</label>
+                        <input type="text" class="form-input" id="input-contrato-observacao" placeholder="Ex: Necess&aacute;rio atualiza&ccedil;&atilde;o de contrato">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-contrato')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Sequ&ecirc;ncia -->
+    <div id="modal-sequencia" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-sequencia-title">Nova Sequ&ecirc;ncia</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-sequencia">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="input-sequencia-numero">N&uacute;mero da Sequ&ecirc;ncia *</label>
+                            <input type="number" class="form-input" id="input-sequencia-numero" placeholder="Ex: 1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-sequencia-dia">Dia de Emiss&atilde;o *</label>
+                            <input type="number" class="form-input" id="input-sequencia-dia" placeholder="Ex: 15" min="1" max="31" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-sequencia-custo">Custo (R$) *</label>
+                        <input type="number" class="form-input" id="input-sequencia-custo" placeholder="Ex: 1500.00" step="0.01" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-sequencia')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
