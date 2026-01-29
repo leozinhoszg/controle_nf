@@ -9,7 +9,7 @@ exports.getAll = async (req, res) => {
         }
         const contratos = await Contrato.find(filter)
             .populate('fornecedor', 'nome')
-            .sort({ numero: 1 });
+            .sort({ 'nr-contrato': 1 });
         res.json(contratos);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -35,8 +35,8 @@ exports.create = async (req, res) => {
     try {
         const contrato = new Contrato({
             fornecedor: req.body.fornecedor,
-            numero: req.body.numero,
-            estabelecimento: req.body.estabelecimento || 1,
+            'nr-contrato': req.body['nr-contrato'],
+            'cod-estabel': req.body['cod-estabel'] || '01',
             observacao: req.body.observacao || ''
         });
         const novoContrato = await contrato.save();
@@ -53,8 +53,8 @@ exports.update = async (req, res) => {
     try {
         const updateData = {};
         if (req.body.fornecedor) updateData.fornecedor = req.body.fornecedor;
-        if (req.body.numero) updateData.numero = req.body.numero;
-        if (req.body.estabelecimento !== undefined) updateData.estabelecimento = req.body.estabelecimento;
+        if (req.body['nr-contrato']) updateData['nr-contrato'] = req.body['nr-contrato'];
+        if (req.body['cod-estabel'] !== undefined) updateData['cod-estabel'] = req.body['cod-estabel'];
         if (req.body.observacao !== undefined) updateData.observacao = req.body.observacao;
 
         const contrato = await Contrato.findByIdAndUpdate(

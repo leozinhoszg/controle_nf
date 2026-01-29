@@ -60,6 +60,14 @@ const startServer = async () => {
   - GET            /api/relatorio/resumo
   - POST           /api/relatorio/seed
 
+  Webhooks (n8n):
+  - GET/POST       /api/webhooks
+  - GET/PUT/DELETE /api/webhooks/:id
+  - GET            /api/webhooks/eventos
+  - POST           /api/webhooks/:id/testar
+  - POST           /api/webhooks/verificar-atrasadas
+  - POST           /api/webhooks/enviar-resumo
+
 ========================================
             `);
         });

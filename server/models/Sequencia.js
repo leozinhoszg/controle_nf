@@ -6,7 +6,7 @@ const sequenciaSchema = new mongoose.Schema({
         ref: 'Contrato',
         required: [true, 'Contrato é obrigatório']
     },
-    numero: {
+    'num-seq-item': {
         type: Number,
         required: [true, 'Número da sequência é obrigatório']
     },
@@ -16,9 +16,9 @@ const sequenciaSchema = new mongoose.Schema({
         min: 1,
         max: 31
     },
-    custo: {
+    valor: {
         type: Number,
-        required: [true, 'Custo é obrigatório'],
+        required: [true, 'Valor é obrigatório'],
         min: 0
     },
     statusMensal: {
@@ -34,6 +34,6 @@ const sequenciaSchema = new mongoose.Schema({
 });
 
 // Índice composto
-sequenciaSchema.index({ contrato: 1, numero: 1 });
+sequenciaSchema.index({ contrato: 1, 'num-seq-item': 1 });
 
 module.exports = mongoose.model('Sequencia', sequenciaSchema);

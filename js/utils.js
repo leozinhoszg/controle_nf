@@ -20,6 +20,28 @@ const Utils = {
         return parseFloat(str.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
     },
 
+    // Máscara de moeda (input)
+    maskCurrency(value) {
+        let v = value.replace(/\D/g, '');
+        if (!v) return '';
+        v = (parseInt(v, 10) / 100).toFixed(2);
+        v = v.replace('.', ',');
+        v = v.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return v;
+    },
+
+    // Aplicar máscara de moeda a um input
+    applyMaskCurrency(input) {
+        input.addEventListener('input', (e) => {
+            const cursorPos = e.target.selectionStart;
+            const oldLength = e.target.value.length;
+            e.target.value = Utils.maskCurrency(e.target.value);
+            const newLength = e.target.value.length;
+            const newPos = cursorPos + (newLength - oldLength);
+            e.target.setSelectionRange(newPos, newPos);
+        });
+    },
+
     // Formatar dia de emissão
     formatDiaEmissao(dia) {
         return `Dia ${dia}`;
@@ -168,6 +190,17 @@ const Utils = {
     // Confirmar ação
     confirm(message) {
         return window.confirm(message);
+    },
+
+    // Mapeamento de estabelecimentos
+    estabelecimentos: {
+        '01': 'PROMA CONTAGEM',
+        '02': 'PROMA JUATUBA'
+    },
+
+    // Obter nome do estabelecimento pelo código
+    getEstabelecimentoNome(codigo) {
+        return this.estabelecimentos[codigo] || codigo;
     }
 };
 

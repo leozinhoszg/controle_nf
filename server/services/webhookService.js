@@ -76,11 +76,11 @@ const webhookService = {
                 const item = {
                     sequenciaId: seq._id,
                     fornecedor: seq.contrato.fornecedor.nome,
-                    contrato: seq.contrato.numero,
-                    estabelecimento: seq.contrato.estabelecimento,
-                    sequencia: seq.numero,
+                    contrato: seq.contrato['nr-contrato'],
+                    estabelecimento: seq.contrato['cod-estabel'],
+                    sequencia: seq['num-seq-item'],
                     diaEmissao: seq.diaEmissao,
-                    custo: seq.custo,
+                    valor: seq.valor,
                     mes: mesAtual
                 };
 
@@ -140,7 +140,7 @@ const webhookService = {
 
                 if (diaAtual >= seq.diaEmissao) {
                     atrasadas++;
-                    valorTotalAtrasadas += seq.custo;
+                    valorTotalAtrasadas += seq.valor;
                 } else {
                     pendentes++;
                 }
@@ -176,11 +176,11 @@ const webhookService = {
             await this.dispatch('nf_status_alterado', {
                 sequenciaId: sequencia._id,
                 fornecedor: sequencia.contrato?.fornecedor?.nome,
-                contrato: sequencia.contrato?.numero,
-                sequencia: sequencia.numero,
+                contrato: sequencia.contrato?.['nr-contrato'],
+                sequencia: sequencia['num-seq-item'],
                 mes: mesKey,
                 novoStatus,
-                custo: sequencia.custo
+                valor: sequencia.valor
             });
         } catch (error) {
             console.error('Erro ao notificar mudanca de status:', error);

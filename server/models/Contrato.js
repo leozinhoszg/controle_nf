@@ -6,13 +6,13 @@ const contratoSchema = new mongoose.Schema({
         ref: 'Fornecedor',
         required: [true, 'Fornecedor é obrigatório']
     },
-    numero: {
+    'nr-contrato': {
         type: Number,
         required: [true, 'Número do contrato é obrigatório']
     },
-    estabelecimento: {
-        type: Number,
-        default: 1
+    'cod-estabel': {
+        type: String,
+        default: '01'
     },
     observacao: {
         type: String,
@@ -35,6 +35,6 @@ contratoSchema.set('toJSON', { virtuals: true });
 contratoSchema.set('toObject', { virtuals: true });
 
 // Índice composto para evitar duplicatas
-contratoSchema.index({ fornecedor: 1, numero: 1, estabelecimento: 1 });
+contratoSchema.index({ fornecedor: 1, 'nr-contrato': 1, 'cod-estabel': 1 });
 
 module.exports = mongoose.model('Contrato', contratoSchema);

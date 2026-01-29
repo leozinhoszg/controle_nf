@@ -135,8 +135,8 @@ const DataManager = {
         if (this.useAPI) {
             return await API.createContrato({
                 fornecedor: fornecedorId,
-                numero: parseInt(numero),
-                estabelecimento: parseInt(estabelecimento) || 1,
+                'nr-contrato': parseInt(numero),
+                'cod-estabel': estabelecimento || '01',
                 observacao
             });
         }
@@ -156,10 +156,18 @@ const DataManager = {
 
     async updateContrato(id, updates) {
         if (this.useAPI) {
-            const apiUpdates = { ...updates };
+            const apiUpdates = {};
             if (updates.fornecedorId) {
                 apiUpdates.fornecedor = updates.fornecedorId;
-                delete apiUpdates.fornecedorId;
+            }
+            if (updates.numero !== undefined) {
+                apiUpdates['nr-contrato'] = updates.numero;
+            }
+            if (updates.estabelecimento !== undefined) {
+                apiUpdates['cod-estabel'] = updates.estabelecimento;
+            }
+            if (updates.observacao !== undefined) {
+                apiUpdates.observacao = updates.observacao;
             }
             return await API.updateContrato(id, apiUpdates);
         }
@@ -206,13 +214,13 @@ const DataManager = {
         return this.loadLocal().sequencias.find(s => s.id === id);
     },
 
-    async addSequencia(contratoId, numero, diaEmissao, custo) {
+    async addSequencia(contratoId, numero, diaEmissao, valor) {
         if (this.useAPI) {
             return await API.createSequencia({
                 contrato: contratoId,
-                numero: parseInt(numero),
+                'num-seq-item': parseInt(numero),
                 diaEmissao: parseInt(diaEmissao),
-                custo: parseFloat(custo)
+                valor: parseFloat(valor)
             });
         }
         const data = this.loadLocal();
@@ -221,7 +229,7 @@ const DataManager = {
             contratoId,
             numero: parseInt(numero),
             diaEmissao: parseInt(diaEmissao),
-            custo: parseFloat(custo),
+            valor: parseFloat(valor),
             statusMensal: {},
             createdAt: new Date().toISOString()
         };
@@ -232,10 +240,18 @@ const DataManager = {
 
     async updateSequencia(id, updates) {
         if (this.useAPI) {
-            const apiUpdates = { ...updates };
+            const apiUpdates = {};
             if (updates.contratoId) {
                 apiUpdates.contrato = updates.contratoId;
-                delete apiUpdates.contratoId;
+            }
+            if (updates.numero !== undefined) {
+                apiUpdates['num-seq-item'] = updates.numero;
+            }
+            if (updates.diaEmissao !== undefined) {
+                apiUpdates.diaEmissao = updates.diaEmissao;
+            }
+            if (updates.valor !== undefined) {
+                apiUpdates.valor = updates.valor;
             }
             return await API.updateSequencia(id, apiUpdates);
         }
@@ -304,7 +320,7 @@ const DataManager = {
                 estabelecimento: contrato.estabelecimento,
                 sequencia: seq.numero,
                 diaEmissao: seq.diaEmissao,
-                custo: seq.custo,
+                valor: seq.valor,
                 statusMensal: seq.statusMensal || {},
                 observacao: contrato.observacao
             });
@@ -459,27 +475,27 @@ const DataManager = {
         ];
 
         const sequenciasData = [
-            { contratoId: 'c1', numero: 1, diaEmissao: 15, custo: 3589.20 },
-            { contratoId: 'c1', numero: 2, diaEmissao: 15, custo: 708.15 },
-            { contratoId: 'c1', numero: 3, diaEmissao: 15, custo: 436.50 },
-            { contratoId: 'c1', numero: 4, diaEmissao: 15, custo: 261.16 },
-            { contratoId: 'c1', numero: 5, diaEmissao: 15, custo: 1343.64 },
-            { contratoId: 'c1', numero: 11, diaEmissao: 15, custo: 7091.50 },
-            { contratoId: 'c2', numero: 12, diaEmissao: 15, custo: 214.50 },
-            { contratoId: 'c2', numero: 13, diaEmissao: 15, custo: 195.80 },
-            { contratoId: 'c2', numero: 14, diaEmissao: 15, custo: 78.40 },
-            { contratoId: 'c2', numero: 15, diaEmissao: 15, custo: 2827.50 },
-            { contratoId: 'c2', numero: 16, diaEmissao: 15, custo: 1007.73 },
-            { contratoId: 'c2', numero: 17, diaEmissao: 15, custo: 711.00 },
-            { contratoId: 'c2', numero: 18, diaEmissao: 15, custo: 4355.80 },
-            { contratoId: 'c3', numero: 3, diaEmissao: 3, custo: 6500.00 },
-            { contratoId: 'c3', numero: 2, diaEmissao: 3, custo: 2221.31 },
-            { contratoId: 'c4', numero: 1, diaEmissao: 18, custo: 6960.00 },
-            { contratoId: 'c5', numero: 1, diaEmissao: 1, custo: 1652.63 },
-            { contratoId: 'c6', numero: 1, diaEmissao: 1, custo: 1193.93 },
-            { contratoId: 'c7', numero: 3, diaEmissao: 6, custo: 478.78 },
-            { contratoId: 'c8', numero: 2, diaEmissao: 1, custo: 5692.01 },
-            { contratoId: 'c8', numero: 2, diaEmissao: 29, custo: 2012.00 }
+            { contratoId: 'c1', numero: 1, diaEmissao: 15, valor: 3589.20 },
+            { contratoId: 'c1', numero: 2, diaEmissao: 15, valor: 708.15 },
+            { contratoId: 'c1', numero: 3, diaEmissao: 15, valor: 436.50 },
+            { contratoId: 'c1', numero: 4, diaEmissao: 15, valor: 261.16 },
+            { contratoId: 'c1', numero: 5, diaEmissao: 15, valor: 1343.64 },
+            { contratoId: 'c1', numero: 11, diaEmissao: 15, valor: 7091.50 },
+            { contratoId: 'c2', numero: 12, diaEmissao: 15, valor: 214.50 },
+            { contratoId: 'c2', numero: 13, diaEmissao: 15, valor: 195.80 },
+            { contratoId: 'c2', numero: 14, diaEmissao: 15, valor: 78.40 },
+            { contratoId: 'c2', numero: 15, diaEmissao: 15, valor: 2827.50 },
+            { contratoId: 'c2', numero: 16, diaEmissao: 15, valor: 1007.73 },
+            { contratoId: 'c2', numero: 17, diaEmissao: 15, valor: 711.00 },
+            { contratoId: 'c2', numero: 18, diaEmissao: 15, valor: 4355.80 },
+            { contratoId: 'c3', numero: 3, diaEmissao: 3, valor: 6500.00 },
+            { contratoId: 'c3', numero: 2, diaEmissao: 3, valor: 2221.31 },
+            { contratoId: 'c4', numero: 1, diaEmissao: 18, valor: 6960.00 },
+            { contratoId: 'c5', numero: 1, diaEmissao: 1, valor: 1652.63 },
+            { contratoId: 'c6', numero: 1, diaEmissao: 1, valor: 1193.93 },
+            { contratoId: 'c7', numero: 3, diaEmissao: 6, valor: 478.78 },
+            { contratoId: 'c8', numero: 2, diaEmissao: 1, valor: 5692.01 },
+            { contratoId: 'c8', numero: 2, diaEmissao: 29, valor: 2012.00 }
         ];
 
         data.fornecedores = fornecedores.map(f => ({

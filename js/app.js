@@ -93,7 +93,7 @@ const App = {
                     <div class="list-item">
                         <div class="list-item-content">
                             <span class="list-item-title">${item.fornecedor} - Contrato ${item.contrato}</span>
-                            <span class="list-item-subtitle">Seq. ${item.sequencia} | ${item.mesAtrasado} | ${Utils.formatCurrency(item.custo)}</span>
+                            <span class="list-item-subtitle">Seq. ${item.sequencia} | ${item.mesAtrasado} | ${Utils.formatCurrency(item.valor)}</span>
                         </div>
                         <span class="badge badge-danger">Atrasada</span>
                     </div>
@@ -109,7 +109,7 @@ const App = {
                     <div class="list-item">
                         <div class="list-item-content">
                             <span class="list-item-title">${item.fornecedor} - Contrato ${item.contrato}</span>
-                            <span class="list-item-subtitle">Seq. ${item.sequencia} | Dia ${item.diaEmissao} | ${Utils.formatCurrency(item.custo)}</span>
+                            <span class="list-item-subtitle">Seq. ${item.sequencia} | Dia ${item.diaEmissao} | ${Utils.formatCurrency(item.valor)}</span>
                         </div>
                         <span class="badge badge-warning">Pendente</span>
                     </div>
@@ -267,7 +267,7 @@ const App = {
                         html += `
                             <div class="list-item" style="margin-bottom: 0.5rem;">
                                 <div class="list-item-content">
-                                    <span class="list-item-title">Contrato ${c.numero} - Estab. ${c.estabelecimento}</span>
+                                    <span class="list-item-title">Contrato ${c['nr-contrato'] || c.numero} - ${Utils.getEstabelecimentoNome(c['cod-estabel'] || c.estabelecimento)}</span>
                                     <span class="list-item-subtitle">${sequencias.length} sequencia(s) | ${c.observacao || 'Sem observacao'}</span>
                                 </div>
                                 <div class="list-item-actions">
@@ -286,7 +286,7 @@ const App = {
                                 html += `
                                     <div class="list-item" style="background: var(--bg); margin-bottom: 0.25rem; padding: 0.5rem;">
                                         <div class="list-item-content">
-                                            <span class="list-item-subtitle">Seq. ${s.numero} | Dia ${s.diaEmissao} | ${Utils.formatCurrency(s.custo)}</span>
+                                            <span class="list-item-subtitle">Seq. ${s['num-seq-item'] || s.numero} | Dia ${s.diaEmissao} | ${Utils.formatCurrency(s.valor)}</span>
                                         </div>
                                         <div class="list-item-actions">
                                             <button class="btn btn-sm btn-secondary" onclick="App.editSequencia('${sId}')">Editar</button>
@@ -321,14 +321,14 @@ const App = {
             const contrato = await DataManager.getContrato(id);
             title.textContent = 'Editar Contrato';
             selectFornecedor.value = contrato.fornecedor?._id || contrato.fornecedor || contrato.fornecedorId;
-            inputNumero.value = contrato.numero;
-            inputEstab.value = contrato.estabelecimento;
+            inputNumero.value = contrato['nr-contrato'] || contrato.numero;
+            inputEstab.value = contrato['cod-estabel'] || contrato.estabelecimento;
             inputObs.value = contrato.observacao || '';
         } else {
             title.textContent = 'Novo Contrato';
             selectFornecedor.value = '';
             inputNumero.value = '';
-            inputEstab.value = '1';
+            inputEstab.value = '01';
             inputObs.value = '';
         }
 
@@ -355,12 +355,12 @@ const App = {
                 await DataManager.updateContrato(this.currentContratoId, {
                     fornecedorId,
                     numero: parseInt(numero),
-                    estabelecimento: parseInt(estabelecimento) || 1,
+                    estabelecimento: estabelecimento || '01',
                     observacao
                 });
                 Utils.showToast('Contrato atualizado', 'success');
             } else {
-                await DataManager.addContrato(fornecedorId, numero, estabelecimento || 1, observacao);
+                await DataManager.addContrato(fornecedorId, numero, estabelecimento || '01', observacao);
                 Utils.showToast('Contrato cadastrado', 'success');
             }
 
@@ -374,7 +374,7 @@ const App = {
 
     async deleteContrato(id) {
         const contrato = await DataManager.getContrato(id);
-        if (Utils.confirm(`Excluir contrato ${contrato.numero} e todas as suas sequencias?`)) {
+        if (Utils.confirm(`Excluir contrato ${contrato['nr-contrato'] || contrato.numero} e todas as suas sequencias?`)) {
             try {
                 await DataManager.deleteContrato(id);
                 Utils.showToast('Contrato excluido', 'success');
@@ -396,19 +396,25 @@ const App = {
         const title = document.getElementById('modal-sequencia-title');
         const inputNumero = document.getElementById('input-sequencia-numero');
         const inputDia = document.getElementById('input-sequencia-dia');
-        const inputCusto = document.getElementById('input-sequencia-custo');
+        const inputValor = document.getElementById('input-sequencia-valor');
+
+        // Aplicar máscara de moeda (apenas uma vez)
+        if (!inputValor.dataset.masked) {
+            Utils.applyMaskCurrency(inputValor);
+            inputValor.dataset.masked = 'true';
+        }
 
         if (sequenciaId) {
             const sequencia = await DataManager.getSequencia(sequenciaId);
             title.textContent = 'Editar Sequencia';
-            inputNumero.value = sequencia.numero;
+            inputNumero.value = sequencia['num-seq-item'] || sequencia.numero;
             inputDia.value = sequencia.diaEmissao;
-            inputCusto.value = sequencia.custo;
+            inputValor.value = Utils.maskCurrency((sequencia.valor * 100).toString());
         } else {
             title.textContent = 'Nova Sequencia';
             inputNumero.value = '';
             inputDia.value = '15';
-            inputCusto.value = '';
+            inputValor.value = '';
         }
 
         modal.classList.add('active');
@@ -423,9 +429,10 @@ const App = {
     async saveSequencia() {
         const numero = document.getElementById('input-sequencia-numero').value;
         const dia = document.getElementById('input-sequencia-dia').value;
-        const custo = document.getElementById('input-sequencia-custo').value;
+        const valorStr = document.getElementById('input-sequencia-valor').value;
+        const valor = Utils.parseCurrency(valorStr);
 
-        if (!numero || !dia || !custo) {
+        if (!numero || !dia || !valorStr) {
             Utils.showToast('Preencha todos os campos', 'error');
             return;
         }
@@ -435,11 +442,11 @@ const App = {
                 await DataManager.updateSequencia(this.currentSequenciaId, {
                     numero: parseInt(numero),
                     diaEmissao: parseInt(dia),
-                    custo: parseFloat(custo)
+                    valor: valor
                 });
                 Utils.showToast('Sequencia atualizada', 'success');
             } else {
-                await DataManager.addSequencia(this.currentContratoId, numero, dia, custo);
+                await DataManager.addSequencia(this.currentContratoId, numero, dia, valor);
                 Utils.showToast('Sequencia cadastrada', 'success');
             }
 
@@ -501,7 +508,7 @@ const App = {
                     <th class="col-estab">Estab.</th>
                     <th class="col-seq">Seq.</th>
                     <th class="col-emissao">Emissao</th>
-                    <th class="col-custo">Custo</th>
+                    <th class="col-valor">Custo</th>
                     ${months.map(m => `<th class="col-mes">${m.name}</th>`).join('')}
                 </tr>
             `;
@@ -545,7 +552,7 @@ const App = {
                         <td class="col-estab">${row.estabelecimento}</td>
                         <td class="col-seq">${row.sequencia}</td>
                         <td class="col-emissao">Dia ${row.diaEmissao}</td>
-                        <td class="col-custo">${Utils.formatCurrency(row.custo)}</td>
+                        <td class="col-valor">${Utils.formatCurrency(row.valor)}</td>
                         ${monthCells}
                     </tr>
                 `;

@@ -12,7 +12,7 @@ exports.getAll = async (req, res) => {
                 path: 'contrato',
                 populate: { path: 'fornecedor', select: 'nome' }
             })
-            .sort({ numero: 1 });
+            .sort({ 'num-seq-item': 1 });
         res.json(sequencias);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -36,14 +36,61 @@ exports.getById = async (req, res) => {
     }
 };
 
+// Buscar sequencia por parametros (contrato, estabelecimento, sequencia)
+exports.buscar = async (req, res) => {
+    try {
+        const { contrato: nrContrato, estabelecimento, sequencia } = req.query;
+
+        // Validar parâmetros obrigatórios
+        if (!nrContrato || !estabelecimento || !sequencia) {
+            return res.status(400).json({
+                message: 'Parametros obrigatorios: contrato, estabelecimento, sequencia',
+                exemplo: '/api/sequencias/buscar?contrato=369&estabelecimento=1&sequencia=1'
+            });
+        }
+
+        // Primeiro busca o contrato pelo numero e estabelecimento
+        const { Contrato } = require('../models');
+        const contratoDoc = await Contrato.findOne({
+            'nr-contrato': parseInt(nrContrato),
+            'cod-estabel': estabelecimento
+        }).populate('fornecedor', 'nome');
+
+        if (!contratoDoc) {
+            return res.status(404).json({
+                message: `Contrato ${nrContrato} estabelecimento ${estabelecimento} nao encontrado`
+            });
+        }
+
+        // Busca a sequencia pelo numero e contrato
+        const sequenciaDoc = await Sequencia.findOne({
+            contrato: contratoDoc._id,
+            'num-seq-item': parseInt(sequencia)
+        }).populate({
+            path: 'contrato',
+            populate: { path: 'fornecedor', select: 'nome' }
+        });
+
+        if (!sequenciaDoc) {
+            return res.status(404).json({
+                message: `Sequencia ${sequencia} nao encontrada no contrato ${nrContrato}`
+            });
+        }
+
+        res.json(sequenciaDoc);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Criar nova sequencia
 exports.create = async (req, res) => {
     try {
         const sequencia = new Sequencia({
             contrato: req.body.contrato,
-            numero: req.body.numero,
+            'num-seq-item': req.body['num-seq-item'],
             diaEmissao: req.body.diaEmissao,
-            custo: req.body.custo,
+            valor: req.body.valor,
             statusMensal: req.body.statusMensal || {}
         });
         const novaSequencia = await sequencia.save();
@@ -63,9 +110,9 @@ exports.update = async (req, res) => {
     try {
         const updateData = {};
         if (req.body.contrato) updateData.contrato = req.body.contrato;
-        if (req.body.numero !== undefined) updateData.numero = req.body.numero;
+        if (req.body['num-seq-item'] !== undefined) updateData['num-seq-item'] = req.body['num-seq-item'];
         if (req.body.diaEmissao !== undefined) updateData.diaEmissao = req.body.diaEmissao;
-        if (req.body.custo !== undefined) updateData.custo = req.body.custo;
+        if (req.body.valor !== undefined) updateData.valor = req.body.valor;
         if (req.body.statusMensal !== undefined) updateData.statusMensal = req.body.statusMensal;
 
         const sequencia = await Sequencia.findByIdAndUpdate(
