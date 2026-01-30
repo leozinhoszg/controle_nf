@@ -1,40 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { contratosAPI, fornecedoresAPI, sequenciasAPI } from '../services/api';
-import { formatCurrency, formatDate } from '../utils/helpers';
-import Modal from '../components/ui/Modal';
+import { formatCurrency } from '../utils/helpers';
+import Modal, { FormSection, FormRow, FormField } from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Loading from '../components/ui/Loading';
 import EmptyState from '../components/ui/EmptyState';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/ui/Toast';
 
-const initialFormData = {
-  numero: '',
+// Estabelecimentos disponíveis
+const ESTABELECIMENTOS = [
+  { value: '01', label: '01 - PROMA CONTAGEM' },
+  { value: '02', label: '02 - PROMA BETIM' },
+  { value: '03', label: '03 - PROMA BH' }
+];
+
+const initialContratoForm = {
   fornecedor: '',
-  objeto: '',
-  valor: '',
-  dataInicio: '',
-  dataFim: ''
+  'nr-contrato': '',
+  'cod-estabel': '01',
+  observacao: ''
+};
+
+const initialSequenciaForm = {
+  'num-seq-item': '',
+  diaEmissao: '',
+  valor: ''
 };
 
 export default function Contratos() {
   const [contratos, setContratos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
+  const [sequenciasPorContrato, setSequenciasPorContrato] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterFornecedor, setFilterFornecedor] = useState('');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isSequenciasModalOpen, setIsSequenciasModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  // Estados dos modais
+  const [isContratoModalOpen, setIsContratoModalOpen] = useState(false);
+  const [isSequenciaModalOpen, setIsSequenciaModalOpen] = useState(false);
+  const [isDeleteContratoDialogOpen, setIsDeleteContratoDialogOpen] = useState(false);
+  const [isDeleteSequenciaDialogOpen, setIsDeleteSequenciaDialogOpen] = useState(false);
+
+  // Estados de edição
+  const [editingContratoId, setEditingContratoId] = useState(null);
+  const [editingSequenciaId, setEditingSequenciaId] = useState(null);
   const [selectedContrato, setSelectedContrato] = useState(null);
-  const [formData, setFormData] = useState(initialFormData);
+  const [deletingContratoId, setDeletingContratoId] = useState(null);
+  const [deletingSequenciaId, setDeletingSequenciaId] = useState(null);
 
-  const [sequencias, setSequencias] = useState([]);
-  const [novaSequencia, setNovaSequencia] = useState({ numero: '', descricao: '' });
+  // Formulários
+  const [contratoForm, setContratoForm] = useState(initialContratoForm);
+  const [sequenciaForm, setSequenciaForm] = useState(initialSequenciaForm);
+
+  // Contratos expandidos
+  const [expandedContratos, setExpandedContratos] = useState(new Set());
 
   const { toast, showToast, hideToast } = useToast();
 
@@ -51,6 +70,18 @@ export default function Contratos() {
       ]);
       setContratos(contratosRes.data || []);
       setFornecedores(fornecedoresRes.data || []);
+
+      // Carregar sequências para cada contrato
+      const sequenciasMap = {};
+      for (const contrato of contratosRes.data || []) {
+        try {
+          const seqRes = await sequenciasAPI.listarPorContrato(contrato._id);
+          sequenciasMap[contrato._id] = seqRes.data || [];
+        } catch {
+          sequenciasMap[contrato._id] = [];
+        }
+      }
+      setSequenciasPorContrato(sequenciasMap);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       showToast('Erro ao carregar dados', 'error');
@@ -59,58 +90,72 @@ export default function Contratos() {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // Agrupar contratos por fornecedor
+  const contratosPorFornecedor = useMemo(() => {
+    const map = new Map();
 
-  const openCreateModal = () => {
-    setFormData(initialFormData);
-    setEditingId(null);
-    setIsModalOpen(true);
-  };
+    contratos.forEach(contrato => {
+      const fornecedorId = contrato.fornecedor?._id || contrato.fornecedor;
+      const fornecedorNome = contrato.fornecedor?.nome || 'Sem Fornecedor';
 
-  const openEditModal = (contrato) => {
-    setFormData({
-      numero: contrato.numero || '',
-      fornecedor: contrato.fornecedor?._id || contrato.fornecedor || '',
-      objeto: contrato.objeto || '',
-      valor: contrato.valor || '',
-      dataInicio: contrato.dataInicio ? contrato.dataInicio.split('T')[0] : '',
-      dataFim: contrato.dataFim ? contrato.dataFim.split('T')[0] : ''
+      if (!map.has(fornecedorId)) {
+        map.set(fornecedorId, {
+          _id: fornecedorId,
+          nome: fornecedorNome,
+          contratos: []
+        });
+      }
+
+      map.get(fornecedorId).contratos.push(contrato);
     });
-    setEditingId(contrato._id);
-    setIsModalOpen(true);
+
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [contratos]);
+
+  // Toggle expandir contrato
+  const toggleContrato = (contratoId) => {
+    setExpandedContratos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(contratoId)) {
+        newSet.delete(contratoId);
+      } else {
+        newSet.add(contratoId);
+      }
+      return newSet;
+    });
   };
 
-  const openDeleteDialog = (id) => {
-    setDeletingId(id);
-    setIsDeleteDialogOpen(true);
+  // ========== CONTRATO HANDLERS ==========
+
+  const openCreateContratoModal = () => {
+    setContratoForm(initialContratoForm);
+    setEditingContratoId(null);
+    setIsContratoModalOpen(true);
   };
 
-  const openSequenciasModal = async (contrato) => {
-    setSelectedContrato(contrato);
-    setNovaSequencia({ numero: '', descricao: '' });
-    try {
-      const response = await sequenciasAPI.listarPorContrato(contrato._id);
-      setSequencias(response.data || []);
-    } catch (error) {
-      console.error('Erro ao carregar sequências:', error);
-      setSequencias([]);
-    }
-    setIsSequenciasModalOpen(true);
+  const openEditContratoModal = (contrato) => {
+    setContratoForm({
+      fornecedor: contrato.fornecedor?._id || contrato.fornecedor || '',
+      'nr-contrato': contrato['nr-contrato'] || '',
+      'cod-estabel': contrato['cod-estabel'] || '01',
+      observacao: contrato.observacao || ''
+    });
+    setEditingContratoId(contrato._id);
+    setIsContratoModalOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const openDeleteContratoDialog = (contratoId) => {
+    setDeletingContratoId(contratoId);
+    setIsDeleteContratoDialogOpen(true);
+  };
 
-    if (!formData.numero.trim()) {
-      showToast('Número do contrato é obrigatório', 'warning');
+  const handleContratoSubmit = async () => {
+    if (!contratoForm.fornecedor) {
+      showToast('Selecione um fornecedor', 'warning');
       return;
     }
-
-    if (!formData.fornecedor) {
-      showToast('Selecione um fornecedor', 'warning');
+    if (!contratoForm['nr-contrato']) {
+      showToast('Número do contrato é obrigatório', 'warning');
       return;
     }
 
@@ -118,31 +163,33 @@ export default function Contratos() {
       setSaving(true);
 
       const dados = {
-        ...formData,
-        valor: formData.valor ? parseFloat(formData.valor) : 0
+        fornecedor: contratoForm.fornecedor,
+        'nr-contrato': parseInt(contratoForm['nr-contrato']),
+        'cod-estabel': contratoForm['cod-estabel'],
+        observacao: contratoForm.observacao
       };
 
-      if (editingId) {
-        await contratosAPI.atualizar(editingId, dados);
+      if (editingContratoId) {
+        await contratosAPI.atualizar(editingContratoId, dados);
         showToast('Contrato atualizado com sucesso', 'success');
       } else {
         await contratosAPI.criar(dados);
         showToast('Contrato criado com sucesso', 'success');
       }
 
-      setIsModalOpen(false);
+      setIsContratoModalOpen(false);
       loadData();
     } catch (error) {
       console.error('Erro ao salvar contrato:', error);
-      showToast('Erro ao salvar contrato', 'error');
+      showToast(error.response?.data?.message || 'Erro ao salvar contrato', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteContrato = async () => {
     try {
-      await contratosAPI.excluir(deletingId);
+      await contratosAPI.excluir(deletingContratoId);
       showToast('Contrato excluído com sucesso', 'success');
       loadData();
     } catch (error) {
@@ -151,61 +198,89 @@ export default function Contratos() {
     }
   };
 
-  const handleAddSequencia = async () => {
-    if (!novaSequencia.numero.trim()) {
+  // ========== SEQUÊNCIA HANDLERS ==========
+
+  const openCreateSequenciaModal = (contrato) => {
+    setSelectedContrato(contrato);
+    setSequenciaForm(initialSequenciaForm);
+    setEditingSequenciaId(null);
+    setIsSequenciaModalOpen(true);
+  };
+
+  const openEditSequenciaModal = (sequencia, contrato) => {
+    setSelectedContrato(contrato);
+    setSequenciaForm({
+      'num-seq-item': sequencia['num-seq-item'] || '',
+      diaEmissao: sequencia.diaEmissao || '',
+      valor: sequencia.valor || ''
+    });
+    setEditingSequenciaId(sequencia._id);
+    setIsSequenciaModalOpen(true);
+  };
+
+  const openDeleteSequenciaDialog = (sequenciaId) => {
+    setDeletingSequenciaId(sequenciaId);
+    setIsDeleteSequenciaDialogOpen(true);
+  };
+
+  const handleSequenciaSubmit = async () => {
+    if (!sequenciaForm['num-seq-item']) {
       showToast('Número da sequência é obrigatório', 'warning');
+      return;
+    }
+    if (!sequenciaForm.diaEmissao) {
+      showToast('Dia de emissão é obrigatório', 'warning');
+      return;
+    }
+    if (!sequenciaForm.valor) {
+      showToast('Valor é obrigatório', 'warning');
       return;
     }
 
     try {
-      await sequenciasAPI.criar({
-        contrato: selectedContrato._id,
-        numero: novaSequencia.numero,
-        descricao: novaSequencia.descricao
-      });
-      showToast('Sequência adicionada com sucesso', 'success');
-      setNovaSequencia({ numero: '', descricao: '' });
+      setSaving(true);
 
-      const response = await sequenciasAPI.listarPorContrato(selectedContrato._id);
-      setSequencias(response.data || []);
+      const dados = {
+        contrato: selectedContrato._id,
+        'num-seq-item': parseInt(sequenciaForm['num-seq-item']),
+        diaEmissao: parseInt(sequenciaForm.diaEmissao),
+        valor: parseFloat(sequenciaForm.valor)
+      };
+
+      if (editingSequenciaId) {
+        await sequenciasAPI.atualizar(editingSequenciaId, dados);
+        showToast('Sequência atualizada com sucesso', 'success');
+      } else {
+        await sequenciasAPI.criar(dados);
+        showToast('Sequência criada com sucesso', 'success');
+      }
+
+      setIsSequenciaModalOpen(false);
+      loadData();
     } catch (error) {
-      console.error('Erro ao adicionar sequência:', error);
-      showToast('Erro ao adicionar sequência', 'error');
+      console.error('Erro ao salvar sequência:', error);
+      showToast(error.response?.data?.message || 'Erro ao salvar sequência', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDeleteSequencia = async (sequenciaId) => {
+  const handleDeleteSequencia = async () => {
     try {
-      await sequenciasAPI.excluir(sequenciaId);
-      showToast('Sequência excluída', 'success');
-      const response = await sequenciasAPI.listarPorContrato(selectedContrato._id);
-      setSequencias(response.data || []);
+      await sequenciasAPI.excluir(deletingSequenciaId);
+      showToast('Sequência excluída com sucesso', 'success');
+      loadData();
     } catch (error) {
       console.error('Erro ao excluir sequência:', error);
       showToast('Erro ao excluir sequência', 'error');
     }
   };
 
-  const getFornecedorNome = (fornecedor) => {
-    if (!fornecedor) return '-';
-    if (typeof fornecedor === 'string') {
-      const f = fornecedores.find(f => f._id === fornecedor);
-      return f?.nome || '-';
-    }
-    return fornecedor.nome || '-';
+  // Obter nome do estabelecimento
+  const getEstabelecimentoLabel = (cod) => {
+    const estab = ESTABELECIMENTOS.find(e => e.value === cod);
+    return estab ? estab.label : cod;
   };
-
-  const filteredContratos = contratos.filter(c => {
-    const matchesSearch =
-      c.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.objeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getFornecedorNome(c.fornecedor).toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesFornecedor = !filterFornecedor ||
-      (c.fornecedor?._id || c.fornecedor) === filterFornecedor;
-
-    return matchesSearch && matchesFornecedor;
-  });
 
   if (loading) {
     return <Loading text="Carregando contratos..." />;
@@ -221,7 +296,7 @@ export default function Contratos() {
           <h1 className="text-2xl font-bold text-gradient">Contratos</h1>
           <p className="text-base-content/60">Gerencie os contratos e suas sequências</p>
         </div>
-        <button className="btn btn-primary shadow-soft" onClick={openCreateModal}>
+        <button className="btn btn-primary shadow-soft" onClick={openCreateContratoModal}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -229,311 +304,276 @@ export default function Contratos() {
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="glass-card p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar contrato..."
-              className="input input-ghost flex-1 glass-input"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <select
-            className="select select-bordered glass-input w-full sm:w-64"
-            value={filterFornecedor}
-            onChange={(e) => setFilterFornecedor(e.target.value)}
-          >
-            <option value="">Todos os fornecedores</option>
-            {fornecedores.map(f => (
-              <option key={f._id} value={f._id}>{f.nome}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Lista de Contratos */}
-      {filteredContratos.length === 0 ? (
+      {/* Lista de Fornecedores com Contratos */}
+      {contratosPorFornecedor.length === 0 ? (
         <div className="glass-card p-8">
           <EmptyState
-            title={searchTerm || filterFornecedor ? "Nenhum resultado encontrado" : "Nenhum contrato cadastrado"}
-            description={searchTerm || filterFornecedor ? "Tente alterar os filtros" : "Clique em 'Novo Contrato' para começar"}
+            title="Nenhum contrato cadastrado"
+            description="Clique em 'Novo Contrato' para começar"
             icon="📄"
             action={
-              !searchTerm && !filterFornecedor && (
-                <button className="btn btn-primary btn-sm" onClick={openCreateModal}>
-                  Adicionar Contrato
-                </button>
-              )
+              <button className="btn btn-primary btn-sm" onClick={openCreateContratoModal}>
+                Adicionar Contrato
+              </button>
             }
           />
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead className="bg-base-200/30">
-                <tr className="text-base-content/60 uppercase text-xs">
-                  <th>Número</th>
-                  <th>Fornecedor</th>
-                  <th>Objeto</th>
-                  <th>Valor</th>
-                  <th>Período</th>
-                  <th className="text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredContratos.map((contrato) => (
-                  <tr key={contrato._id} className="hover:bg-base-200/20 transition-colors">
-                    <td className="font-semibold font-mono">{contrato.numero}</td>
-                    <td className="text-base-content/80">{getFornecedorNome(contrato.fornecedor)}</td>
-                    <td className="max-w-xs truncate text-base-content/70">{contrato.objeto || '-'}</td>
-                    <td className="font-semibold text-primary">{contrato.valor ? formatCurrency(contrato.valor) : '-'}</td>
-                    <td className="text-sm text-base-content/60">
-                      {contrato.dataInicio || contrato.dataFim ? (
-                        <span>
-                          {formatDate(contrato.dataInicio)} - {formatDate(contrato.dataFim)}
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td>
-                      <div className="flex justify-end gap-1">
-                        <button
-                          className="btn btn-ghost btn-sm btn-square"
-                          onClick={() => openSequenciasModal(contrato)}
-                          title="Gerenciar Sequências"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        <div className="glass-card p-6 space-y-6">
+          {contratosPorFornecedor.map((fornecedor) => (
+            <div key={fornecedor._id} className="space-y-3">
+              {/* Nome do Fornecedor */}
+              <h2 className="text-lg font-bold text-primary">{fornecedor.nome}</h2>
+
+              {/* Contratos do Fornecedor */}
+              <div className="space-y-2">
+                {fornecedor.contratos.map((contrato) => {
+                  const sequencias = sequenciasPorContrato[contrato._id] || [];
+                  const isExpanded = expandedContratos.has(contrato._id);
+
+                  return (
+                    <div key={contrato._id} className="border border-base-200/50 rounded-xl overflow-hidden">
+                      {/* Header do Contrato */}
+                      <div
+                        className="flex items-center justify-between p-4 hover:bg-base-200/30 cursor-pointer transition-colors"
+                        onClick={() => toggleContrato(contrato._id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-4 w-4 text-base-content/50 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-sm btn-square"
-                          onClick={() => openEditModal(contrato)}
-                          title="Editar"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"
-                          onClick={() => openDeleteDialog(contrato._id)}
-                          title="Excluir"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                          <div>
+                            <span className="font-semibold">Contrato {contrato['nr-contrato']} - {contrato['cod-estabel']}</span>
+                            <p className="text-sm text-base-content/50">
+                              {sequencias.length} sequência(s) | {contrato.observacao || 'Sem observação'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Ações do Contrato */}
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="btn btn-sm btn-primary btn-outline"
+                            onClick={() => openCreateSequenciaModal(contrato)}
+                            title="Adicionar Sequência"
+                          >
+                            + Seq
+                          </button>
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => openEditContratoModal(contrato)}
+                            title="Editar Contrato"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            className="btn btn-sm btn-error btn-outline"
+                            onClick={() => openDeleteContratoDialog(contrato._id)}
+                            title="Excluir Contrato"
+                          >
+                            Excluir
+                          </button>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="p-4 border-t border-base-200/30 bg-base-200/10">
-            <p className="text-sm text-base-content/50">
-              {filteredContratos.length} contrato{filteredContratos.length !== 1 ? 's' : ''} encontrado{filteredContratos.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+
+                      {/* Sequências do Contrato */}
+                      {isExpanded && sequencias.length > 0 && (
+                        <div className="border-t border-base-200/30 bg-base-200/10">
+                          {sequencias.map((seq) => (
+                            <div
+                              key={seq._id}
+                              className="flex items-center justify-between px-6 py-3 border-b border-base-200/20 last:border-b-0 hover:bg-base-200/20"
+                            >
+                              <span className="text-base-content/70">
+                                Seq. {seq['num-seq-item']} | Dia {seq.diaEmissao} | {formatCurrency(seq.valor)}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="btn btn-xs btn-ghost"
+                                  onClick={() => openEditSequenciaModal(seq, contrato)}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  className="btn btn-xs btn-square btn-error btn-outline"
+                                  onClick={() => openDeleteSequenciaDialog(seq._id)}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Sem sequências */}
+                      {isExpanded && sequencias.length === 0 && (
+                        <div className="border-t border-base-200/30 bg-base-200/10 px-6 py-4 text-center text-base-content/50 text-sm">
+                          Nenhuma sequência cadastrada
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Modal de Criar/Editar Contrato */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingId ? 'Editar Contrato' : 'Novo Contrato'}
+        isOpen={isContratoModalOpen}
+        onClose={() => setIsContratoModalOpen(false)}
+        title={editingContratoId ? 'Editar Contrato' : 'Novo Contrato'}
+        size="sm"
         actions={
           <>
-            <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)} disabled={saving}>
+            <button className="btn btn-ghost" onClick={() => setIsContratoModalOpen(false)} disabled={saving}>
               Cancelar
             </button>
-            <button className="btn btn-primary shadow-soft" onClick={handleSubmit} disabled={saving}>
+            <button className="btn btn-primary shadow-soft" onClick={handleContratoSubmit} disabled={saving}>
               {saving ? (
                 <span className="loading loading-spinner loading-sm"></span>
-              ) : editingId ? 'Salvar' : 'Criar'}
+              ) : 'Salvar'}
             </button>
           </>
         }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Número do Contrato *</span>
-            </label>
-            <input
-              type="text"
-              name="numero"
-              className="input input-bordered glass-input"
-              value={formData.numero}
-              onChange={handleInputChange}
-              placeholder="Ex: CT-2024-001"
-              required
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Fornecedor *</span>
-            </label>
+        <div className="space-y-4">
+          <FormField label="Fornecedor" required>
             <select
-              name="fornecedor"
-              className="select select-bordered glass-input"
-              value={formData.fornecedor}
-              onChange={handleInputChange}
-              required
+              className="select select-bordered w-full"
+              value={contratoForm.fornecedor}
+              onChange={(e) => setContratoForm(prev => ({ ...prev, fornecedor: e.target.value }))}
             >
               <option value="">Selecione um fornecedor</option>
               {fornecedores.map(f => (
                 <option key={f._id} value={f._id}>{f.nome}</option>
               ))}
             </select>
-          </div>
+          </FormField>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Objeto</span>
-            </label>
-            <textarea
-              name="objeto"
-              className="textarea textarea-bordered glass-input"
-              value={formData.objeto}
-              onChange={handleInputChange}
-              placeholder="Descrição do objeto do contrato"
-              rows={3}
-            />
-          </div>
+          <FormRow>
+            <FormField label="Número do Contrato" required>
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={contratoForm['nr-contrato']}
+                onChange={(e) => setContratoForm(prev => ({ ...prev, 'nr-contrato': e.target.value }))}
+                placeholder="Ex: 757"
+              />
+            </FormField>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Valor</span>
-            </label>
+            <FormField label="Estabelecimento">
+              <select
+                className="select select-bordered w-full"
+                value={contratoForm['cod-estabel']}
+                onChange={(e) => setContratoForm(prev => ({ ...prev, 'cod-estabel': e.target.value }))}
+              >
+                {ESTABELECIMENTOS.map(e => (
+                  <option key={e.value} value={e.value}>{e.label}</option>
+                ))}
+              </select>
+            </FormField>
+          </FormRow>
+
+          <FormField label="Observação">
             <input
-              type="number"
-              name="valor"
-              className="input input-bordered glass-input"
-              value={formData.valor}
-              onChange={handleInputChange}
-              step="0.01"
-              min="0"
-              placeholder="0,00"
+              type="text"
+              className="input input-bordered w-full"
+              value={contratoForm.observacao}
+              onChange={(e) => setContratoForm(prev => ({ ...prev, observacao: e.target.value }))}
+              placeholder="Ex: Necessário atualização de contrato"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Data Início</span>
-              </label>
-              <input
-                type="date"
-                name="dataInicio"
-                className="input input-bordered glass-input"
-                value={formData.dataInicio}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Data Fim</span>
-              </label>
-              <input
-                type="date"
-                name="dataFim"
-                className="input input-bordered glass-input"
-                value={formData.dataFim}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal de Sequências */}
-      <Modal
-        isOpen={isSequenciasModalOpen}
-        onClose={() => setIsSequenciasModalOpen(false)}
-        title={`Sequências - ${selectedContrato?.numero || ''}`}
-      >
-        <div className="space-y-4">
-          {/* Formulário para adicionar sequência */}
-          <div className="glass-card p-4">
-            <p className="text-sm font-medium mb-3">Adicionar Nova Sequência</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Número"
-                className="input input-bordered input-sm glass-input w-24"
-                value={novaSequencia.numero}
-                onChange={(e) => setNovaSequencia(prev => ({ ...prev, numero: e.target.value }))}
-              />
-              <input
-                type="text"
-                placeholder="Descrição (opcional)"
-                className="input input-bordered input-sm glass-input flex-1"
-                value={novaSequencia.descricao}
-                onChange={(e) => setNovaSequencia(prev => ({ ...prev, descricao: e.target.value }))}
-              />
-              <button className="btn btn-primary btn-sm" onClick={handleAddSequencia}>
-                Adicionar
-              </button>
-            </div>
-          </div>
-
-          {/* Lista de sequências */}
-          {sequencias.length === 0 ? (
-            <p className="text-center text-base-content/50 py-8">
-              Nenhuma sequência cadastrada
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="table table-sm">
-                <thead className="bg-base-200/30">
-                  <tr className="text-base-content/60 uppercase text-xs">
-                    <th>Número</th>
-                    <th>Descrição</th>
-                    <th className="w-16"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sequencias.map((seq) => (
-                    <tr key={seq._id} className="hover:bg-base-200/20">
-                      <td className="font-semibold">{seq.numero}</td>
-                      <td className="text-base-content/70">{seq.descricao || '-'}</td>
-                      <td>
-                        <button
-                          className="btn btn-ghost btn-xs text-error hover:bg-error/10"
-                          onClick={() => handleDeleteSequencia(seq._id)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </FormField>
         </div>
       </Modal>
 
-      {/* Dialog de Confirmação de Exclusão */}
+      {/* Modal de Criar/Editar Sequência */}
+      <Modal
+        isOpen={isSequenciaModalOpen}
+        onClose={() => setIsSequenciaModalOpen(false)}
+        title={editingSequenciaId ? 'Editar Sequência' : 'Nova Sequência'}
+        size="sm"
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setIsSequenciaModalOpen(false)} disabled={saving}>
+              Cancelar
+            </button>
+            <button className="btn btn-primary shadow-soft" onClick={handleSequenciaSubmit} disabled={saving}>
+              {saving ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : 'Salvar'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <FormRow>
+            <FormField label="Número da Sequência" required>
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={sequenciaForm['num-seq-item']}
+                onChange={(e) => setSequenciaForm(prev => ({ ...prev, 'num-seq-item': e.target.value }))}
+                placeholder="Ex: 1"
+              />
+            </FormField>
+
+            <FormField label="Dia de Emissão" required>
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={sequenciaForm.diaEmissao}
+                onChange={(e) => setSequenciaForm(prev => ({ ...prev, diaEmissao: e.target.value }))}
+                placeholder="15"
+                min="1"
+                max="31"
+              />
+            </FormField>
+          </FormRow>
+
+          <FormField label="Valor (R$)" required>
+            <input
+              type="number"
+              className="input input-bordered w-full"
+              value={sequenciaForm.valor}
+              onChange={(e) => setSequenciaForm(prev => ({ ...prev, valor: e.target.value }))}
+              placeholder="Ex: 1.500,00"
+              step="0.01"
+              min="0"
+            />
+          </FormField>
+        </div>
+      </Modal>
+
+      {/* Dialog de Confirmação de Exclusão de Contrato */}
       <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDelete}
+        isOpen={isDeleteContratoDialogOpen}
+        onClose={() => setIsDeleteContratoDialogOpen(false)}
+        onConfirm={handleDeleteContrato}
         title="Excluir Contrato"
-        message="Tem certeza que deseja excluir este contrato? Todas as sequências e medições associadas também serão excluídas."
+        message="Tem certeza que deseja excluir este contrato? Todas as sequências associadas também serão excluídas."
+        confirmText="Excluir"
+        variant="error"
+      />
+
+      {/* Dialog de Confirmação de Exclusão de Sequência */}
+      <ConfirmDialog
+        isOpen={isDeleteSequenciaDialogOpen}
+        onClose={() => setIsDeleteSequenciaDialogOpen(false)}
+        onConfirm={handleDeleteSequencia}
+        title="Excluir Sequência"
+        message="Tem certeza que deseja excluir esta sequência?"
         confirmText="Excluir"
         variant="error"
       />

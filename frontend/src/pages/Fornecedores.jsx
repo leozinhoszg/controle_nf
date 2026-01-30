@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fornecedoresAPI } from '../services/api';
-import Modal from '../components/ui/Modal';
+import Modal, { FormSection, FormRow, FormField, FormDivider } from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Loading from '../components/ui/Loading';
 import EmptyState from '../components/ui/EmptyState';
@@ -247,6 +247,7 @@ export default function Fornecedores() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingId ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+        size="md"
         actions={
           <>
             <button className="btn btn-ghost" onClick={() => setIsModalOpen(false)} disabled={saving}>
@@ -260,77 +261,72 @@ export default function Fornecedores() {
           </>
         }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Nome *</span>
-            </label>
-            <input
-              type="text"
-              name="nome"
-              className="input input-bordered glass-input"
-              value={formData.nome}
-              onChange={handleInputChange}
-              placeholder="Nome do fornecedor"
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Dados da Empresa */}
+          <FormSection title="Dados da Empresa">
+            <FormField label="Nome / Razão Social" required>
+              <input
+                type="text"
+                name="nome"
+                className="input input-bordered w-full"
+                value={formData.nome}
+                onChange={handleInputChange}
+                placeholder="Nome do fornecedor"
+                required
+              />
+            </FormField>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">CNPJ</span>
-            </label>
-            <input
-              type="text"
-              name="cnpj"
-              className="input input-bordered glass-input"
-              value={formData.cnpj}
-              onChange={handleInputChange}
-              placeholder="00.000.000/0000-00"
-            />
-          </div>
+            <FormField label="CNPJ" hint="Apenas números ou formatado">
+              <input
+                type="text"
+                name="cnpj"
+                className="input input-bordered w-full"
+                value={formData.cnpj}
+                onChange={handleInputChange}
+                placeholder="00.000.000/0000-00"
+              />
+            </FormField>
+          </FormSection>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Contato</span>
-            </label>
-            <input
-              type="text"
-              name="contato"
-              className="input input-bordered glass-input"
-              value={formData.contato}
-              onChange={handleInputChange}
-              placeholder="Nome do contato"
-            />
-          </div>
+          <FormDivider />
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Email</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              className="input input-bordered glass-input"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="email@exemplo.com"
-            />
-          </div>
+          {/* Informações de Contato */}
+          <FormSection title="Informações de Contato">
+            <FormField label="Pessoa de Contato">
+              <input
+                type="text"
+                name="contato"
+                className="input input-bordered w-full"
+                value={formData.contato}
+                onChange={handleInputChange}
+                placeholder="Nome do responsável"
+              />
+            </FormField>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Telefone</span>
-            </label>
-            <input
-              type="text"
-              name="telefone"
-              className="input input-bordered glass-input"
-              value={formData.telefone}
-              onChange={handleInputChange}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
+            <FormRow>
+              <FormField label="Email">
+                <input
+                  type="email"
+                  name="email"
+                  className="input input-bordered w-full"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="email@exemplo.com"
+                />
+              </FormField>
+
+              <FormField label="Telefone">
+                <input
+                  type="text"
+                  name="telefone"
+                  className="input input-bordered w-full"
+                  value={formData.telefone}
+                  onChange={handleInputChange}
+                  placeholder="(00) 00000-0000"
+                />
+              </FormField>
+            </FormRow>
+          </FormSection>
         </form>
       </Modal>
 
