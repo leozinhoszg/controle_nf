@@ -7,7 +7,12 @@ const sequenciasRoutes = require('./sequencias');
 const relatorioRoutes = require('./relatorio');
 const webhooksRoutes = require('./webhooks');
 const medicoesRoutes = require('./medicoes');
+const authRoutes = require('./auth');
 
+// Rotas de autenticacao
+router.use('/auth', authRoutes);
+
+// Rotas da API
 router.use('/fornecedores', fornecedoresRoutes);
 router.use('/contratos', contratosRoutes);
 router.use('/sequencias', sequenciasRoutes);

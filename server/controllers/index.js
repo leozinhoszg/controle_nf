@@ -4,6 +4,7 @@ const sequenciaController = require('./sequenciaController');
 const relatorioController = require('./relatorioController');
 const webhookController = require('./webhookController');
 const medicaoController = require('./medicaoController');
+const authController = require('./authController');
 
 module.exports = {
     fornecedorController,
@@ -11,5 +12,6 @@ module.exports = {
     sequenciaController,
     relatorioController,
     webhookController,
-    medicaoController
+    medicaoController,
+    authController
 };

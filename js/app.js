@@ -507,18 +507,18 @@ const App = {
             // Header
             thead.innerHTML = `
                 <tr>
-                    <th class="col-check" style="width: 40px; text-align: center;">
+                    <th class="col-check">
                         <input type="checkbox" id="check-all" onchange="App.toggleSelectAll(this.checked)" title="Selecionar todas">
                     </th>
                     <th class="col-fornecedor">Fornecedor</th>
-                    <th class="col-contrato">Contrato</th>
-                    <th class="col-estab">Estab.</th>
-                    <th class="col-seq">Seq.</th>
-                    <th class="col-emissao">Recebimento</th>
+                    <th class="col-contrato">Contr.</th>
+                    <th class="col-estab">Est.</th>
+                    <th class="col-seq">Seq</th>
+                    <th class="col-emissao">Receb.</th>
                     <th class="col-valor">Custo</th>
-                    <th class="col-data">Dt. Emissão</th>
-                    <th class="col-data">Dt. Medição</th>
-                    <th class="col-responsavel">Responsável</th>
+                    <th class="col-data">Dt.Emis.</th>
+                    <th class="col-data">Dt.Med.</th>
+                    <th class="col-responsavel">Resp.</th>
                     ${months.map(m => `<th class="col-mes">${m.name}</th>`).join('')}
                 </tr>
             `;
@@ -561,7 +561,7 @@ const App = {
 
                 return `
                     <tr>
-                        <td class="col-check" style="text-align: center;">
+                        <td class="col-check">
                             <input type="checkbox"
                                    class="seq-checkbox"
                                    data-seq-id="${seqId}"
