@@ -5,6 +5,7 @@ import Modal, { FormSection, FormRow, FormField } from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Loading from '../components/ui/Loading';
 import EmptyState from '../components/ui/EmptyState';
+import DayPicker from '../components/ui/DayPicker';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/ui/Toast';
 
@@ -529,14 +530,10 @@ export default function Contratos() {
             </FormField>
 
             <FormField label="Dia de Emissão" required>
-              <input
-                type="number"
-                className="input input-bordered w-full"
+              <DayPicker
                 value={sequenciaForm.diaEmissao}
-                onChange={(e) => setSequenciaForm(prev => ({ ...prev, diaEmissao: e.target.value }))}
-                placeholder="15"
-                min="1"
-                max="31"
+                onChange={(day) => setSequenciaForm(prev => ({ ...prev, diaEmissao: day }))}
+                placeholder="Selecione o dia"
               />
             </FormField>
           </FormRow>
