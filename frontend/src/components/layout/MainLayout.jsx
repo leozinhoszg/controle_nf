@@ -137,10 +137,10 @@ export default function MainLayout() {
                       className="fixed inset-0 z-10"
                       onClick={() => setUserMenuOpen(false)}
                     ></div>
-                    <div className="absolute right-0 mt-2 w-48 bg-base-100 rounded-xl shadow-lg border border-base-300 py-2 z-20">
+                    <div className="absolute right-0 mt-2 w-48 bg-base-100 rounded-xl shadow-lg border border-base-300 py-2 z-20 animate-fadeIn origin-top-right">
                       <div className="px-4 py-2 border-b border-base-200">
-                        <p className="text-sm font-medium text-base-content">{usuario?.nome || usuario?.usuario || 'Usuário'}</p>
-                        <p className="text-xs text-base-content/60 capitalize">{usuario?.perfil?.nome || 'Sem perfil'}</p>
+                        <p className="text-sm font-medium text-base-content truncate">{usuario?.usuario || 'Usuário'}</p>
+                        <p className="text-xs text-base-content/60 truncate">{usuario?.email || 'Sem email'}</p>
                       </div>
                       <Link
                         to="/perfil"
