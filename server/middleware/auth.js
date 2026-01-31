@@ -1,4 +1,5 @@
 const authService = require('../services/authService');
+const { Perfil } = require('../models');
 
 /**
  * Middleware de autenticacao JWT
@@ -20,8 +21,18 @@ const autenticar = async (req, res, next) => {
             id: decoded.id,
             usuario: decoded.usuario,
             email: decoded.email,
-            perfil: decoded.perfil
+            perfilId: decoded.perfil
         };
+
+        // Buscar permissoes do perfil
+        if (decoded.perfil) {
+            const perfil = await Perfil.findById(decoded.perfil);
+            if (perfil) {
+                req.user.perfil = perfil;
+                req.user.permissoes = perfil.permissoes || [];
+                req.user.isAdmin = perfil.isAdmin || false;
+            }
+        }
 
         next();
     } catch (error) {
@@ -36,7 +47,7 @@ const autenticar = async (req, res, next) => {
 };
 
 /**
- * Middleware de autorizacao por perfil/role
+ * Middleware de autorizacao por perfil/role (legado)
  * @param  {...string} perfisPermitidos - Lista de perfis permitidos
  */
 const autorizar = (...perfisPermitidos) => {
@@ -45,13 +56,46 @@ const autorizar = (...perfisPermitidos) => {
             return res.status(401).json({ message: 'Nao autenticado' });
         }
 
-        if (!perfisPermitidos.includes(req.user.perfil)) {
-            return res.status(403).json({
-                message: 'Acesso negado. Permissao insuficiente.'
-            });
+        // Se usuario e admin, permite acesso
+        if (req.user.isAdmin) {
+            return next();
         }
 
-        next();
+        // Verifica se o nome do perfil esta na lista
+        const nomePerfil = req.user.perfil?.nome?.toLowerCase();
+        if (nomePerfil && perfisPermitidos.map(p => p.toLowerCase()).includes(nomePerfil)) {
+            return next();
+        }
+
+        return res.status(403).json({
+            message: 'Acesso negado. Permissao insuficiente.'
+        });
+    };
+};
+
+/**
+ * Middleware de autorizacao por permissao especifica
+ * @param {string} permissaoNecessaria - Permissao necessaria (ex: 'usuarios', 'fornecedores')
+ */
+const autorizarPermissao = (permissaoNecessaria) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Nao autenticado' });
+        }
+
+        // Se usuario e admin, permite acesso total
+        if (req.user.isAdmin) {
+            return next();
+        }
+
+        // Verifica se usuario tem a permissao necessaria
+        if (req.user.permissoes && req.user.permissoes.includes(permissaoNecessaria)) {
+            return next();
+        }
+
+        return res.status(403).json({
+            message: 'Acesso negado. Voce nao tem permissao para acessar este recurso.'
+        });
     };
 };
 
@@ -84,5 +128,6 @@ const autenticarOpcional = async (req, res, next) => {
 module.exports = {
     autenticar,
     autorizar,
+    autorizarPermissao,
     autenticarOpcional
 };

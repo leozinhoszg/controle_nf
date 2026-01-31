@@ -21,12 +21,12 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Criar usuario
+        // Criar usuario (sem perfil - admin deve atribuir depois)
         const user = new User({
             usuario,
             email,
             senha,
-            perfil: 'usuario',
+            perfil: null,
             ativo: true,
             emailVerificado: false
         });
@@ -64,10 +64,12 @@ exports.login = async (req, res) => {
         const ipAddress = req.ip || req.connection.remoteAddress;
         const userAgent = req.get('User-Agent') || '';
 
-        // Buscar usuario com senha
+        // Buscar usuario com senha e popular perfil
         const user = await User.findOne({
             $or: [{ usuario }, { email: usuario }]
-        }).select('+senha +bloqueadoAte +tentativasLogin');
+        })
+            .select('+senha +bloqueadoAte +tentativasLogin')
+            .populate('perfil', 'nome permissoes isAdmin');
 
         if (!user) {
             return res.status(401).json({ message: 'Credenciais invalidas' });
@@ -307,7 +309,8 @@ exports.resetPassword = async (req, res) => {
 // Obter perfil do usuario autenticado
 exports.getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = await User.findById(req.user.id)
+            .populate('perfil', 'nome permissoes isAdmin');
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });

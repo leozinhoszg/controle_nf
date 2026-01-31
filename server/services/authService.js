@@ -3,6 +3,24 @@ const crypto = require('crypto');
 const { User, RefreshToken } = require('../models');
 const jwtConfig = require('../config/jwt');
 
+/**
+ * Extrai o ID do perfil de forma segura
+ * Lida com perfis populados (objeto) ou não populados (ObjectId)
+ */
+const extrairPerfilId = (perfil) => {
+    if (!perfil) return null;
+    // Se for objeto populado, retorna o _id
+    if (typeof perfil === 'object' && perfil._id) {
+        return perfil._id;
+    }
+    // Se for ObjectId ou string de ObjectId valido
+    if (typeof perfil === 'object' || (typeof perfil === 'string' && perfil.match(/^[0-9a-fA-F]{24}$/))) {
+        return perfil;
+    }
+    // Se for string antiga (como 'admin', 'usuario'), retorna null
+    return null;
+};
+
 const authService = {
     /**
      * Gera par de tokens (access + refresh)
@@ -11,13 +29,15 @@ const authService = {
      * @param {string} userAgent - User-Agent do cliente
      */
     async gerarTokens(user, ipAddress, userAgent) {
+        const perfilId = extrairPerfilId(user.perfil);
+
         // Gerar Access Token (curta duracao)
         const accessToken = jwt.sign(
             {
                 id: user._id,
                 usuario: user.usuario,
                 email: user.email,
-                perfil: user.perfil
+                perfil: perfilId
             },
             jwtConfig.accessTokenSecret,
             {
@@ -95,12 +115,13 @@ const authService = {
         await refreshToken.save();
 
         // Gerar novo access token
+        const perfilId = extrairPerfilId(user.perfil);
         const accessToken = jwt.sign(
             {
                 id: user._id,
                 usuario: user.usuario,
                 email: user.email,
-                perfil: user.perfil
+                perfil: perfilId
             },
             jwtConfig.accessTokenSecret,
             {

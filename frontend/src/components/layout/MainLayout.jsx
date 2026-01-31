@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../ui/ThemeToggle';
 import navBg from '../../assets/nav.png';
 import logo from '../../assets/PROMA 6.2.png';
 
-const navItems = [
-  { path: '/', label: 'Dashboard' },
-  { path: '/fornecedores', label: 'Fornecedores' },
-  { path: '/contratos', label: 'Contratos' },
-  { path: '/relatorio', label: 'Relatório' }
+// Itens de navegação com suas permissões necessárias
+const allNavItems = [
+  { path: '/', label: 'Dashboard', permissao: 'dashboard' },
+  { path: '/fornecedores', label: 'Fornecedores', permissao: 'fornecedores' },
+  { path: '/contratos', label: 'Contratos', permissao: 'contratos' },
+  { path: '/relatorio', label: 'Relatório', permissao: 'relatorio' },
+  { path: '/usuarios', label: 'Usuários', permissao: 'usuarios' },
+  { path: '/perfis', label: 'Perfis', permissao: 'perfis' }
 ];
 
 export default function MainLayout() {
@@ -18,6 +21,25 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, logout } = useAuth();
+
+  // Filtrar itens de navegação baseado nas permissões do usuário
+  const navItems = useMemo(() => {
+    const perfil = usuario?.perfil;
+
+    // Se não tem perfil, mostrar apenas dashboard
+    if (!perfil) {
+      return allNavItems.filter(item => item.permissao === 'dashboard');
+    }
+
+    // Se é admin, mostrar tudo
+    if (perfil.isAdmin) {
+      return allNavItems;
+    }
+
+    // Filtrar baseado nas permissões do perfil
+    const permissoes = perfil.permissoes || [];
+    return allNavItems.filter(item => permissoes.includes(item.permissao));
+  }, [usuario?.perfil]);
 
   const handleLogout = () => {
     logout();
@@ -103,7 +125,7 @@ export default function MainLayout() {
                     <div className="absolute right-0 mt-2 w-48 bg-base-100 rounded-xl shadow-lg border border-base-300 py-2 z-20">
                       <div className="px-4 py-2 border-b border-base-200">
                         <p className="text-sm font-medium text-base-content">{usuario?.usuario || 'Usuário'}</p>
-                        <p className="text-xs text-base-content/60 capitalize">{usuario?.perfil || 'usuario'}</p>
+                        <p className="text-xs text-base-content/60 capitalize">{usuario?.perfil?.nome || 'Sem perfil'}</p>
                       </div>
                       <button
                         onClick={handleLogout}

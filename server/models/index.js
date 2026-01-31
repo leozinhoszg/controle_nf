@@ -5,6 +5,7 @@ const Webhook = require('./Webhook');
 const Medicao = require('./Medicao');
 const User = require('./User');
 const RefreshToken = require('./RefreshToken');
+const Perfil = require('./Perfil');
 
 module.exports = {
     Fornecedor,
@@ -13,5 +14,6 @@ module.exports = {
     Webhook,
     Medicao,
     User,
-    RefreshToken
+    RefreshToken,
+    Perfil
 };

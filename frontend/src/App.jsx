@@ -14,6 +14,8 @@ import Dashboard from './pages/Dashboard';
 import Fornecedores from './pages/Fornecedores';
 import Contratos from './pages/Contratos';
 import RelatorioMensal from './pages/RelatorioMensal';
+import Usuarios from './pages/Usuarios';
+import Perfis from './pages/Perfis';
 
 // Styles
 import './index.css';
@@ -45,6 +47,8 @@ function App() {
             <Route path="/fornecedores" element={<Fornecedores />} />
             <Route path="/contratos" element={<Contratos />} />
             <Route path="/relatorio" element={<RelatorioMensal />} />
+            <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/perfis" element={<Perfis />} />
           </Route>
 
           {/* Redirecionar rotas desconhecidas */}

@@ -26,9 +26,9 @@ const userSchema = new mongoose.Schema({
         select: false // Nao retorna senha por padrao nas queries
     },
     perfil: {
-        type: String,
-        enum: ['admin', 'gerente', 'usuario'],
-        default: 'usuario'
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Perfil',
+        default: null
     },
     ativo: {
         type: Boolean,

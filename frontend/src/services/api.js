@@ -143,3 +143,37 @@ export const medicoesAPI = {
   obterAlertas: () => api.get('/medicoes/alertas'),
   atualizar: (id, data) => api.put(`/medicoes/${id}`, data)
 };
+
+// ==================== USUÁRIOS ====================
+export const usuariosAPI = {
+  getAll: (params) => api.get('/usuarios', { params }),
+  getById: (id) => api.get(`/usuarios/${id}`),
+  create: (data) => api.post('/usuarios', data),
+  update: (id, data) => api.put(`/usuarios/${id}`, data),
+  delete: (id) => api.delete(`/usuarios/${id}`),
+  alterarSenha: (id, novaSenha) => api.patch(`/usuarios/${id}/senha`, { novaSenha }),
+  toggleAtivo: (id) => api.patch(`/usuarios/${id}/toggle-ativo`),
+  // Aliases em português
+  listar: (params) => api.get('/usuarios', { params }),
+  buscarPorId: (id) => api.get(`/usuarios/${id}`),
+  criar: (data) => api.post('/usuarios', data),
+  atualizar: (id, data) => api.put(`/usuarios/${id}`, data),
+  excluir: (id) => api.delete(`/usuarios/${id}`)
+};
+
+// ==================== PERFIS ====================
+export const perfisAPI = {
+  getAll: (params) => api.get('/perfis', { params }),
+  getById: (id) => api.get(`/perfis/${id}`),
+  create: (data) => api.post('/perfis', data),
+  update: (id, data) => api.put(`/perfis/${id}`, data),
+  delete: (id) => api.delete(`/perfis/${id}`),
+  getPermissoes: () => api.get('/perfis/permissoes'),
+  // Aliases em português
+  listar: (params) => api.get('/perfis', { params }),
+  buscarPorId: (id) => api.get(`/perfis/${id}`),
+  criar: (data) => api.post('/perfis', data),
+  atualizar: (id, data) => api.put(`/perfis/${id}`, data),
+  excluir: (id) => api.delete(`/perfis/${id}`),
+  listarPermissoes: () => api.get('/perfis/permissoes')
+};
