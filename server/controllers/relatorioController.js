@@ -35,8 +35,26 @@ exports.getTabela = async (req, res) => {
             }
         });
 
+        // Obter IDs das sequências que têm medições no ano selecionado
+        const sequenciasComMedicao = new Set(Object.keys(medicoesPorSequencia));
+
         const rows = sequencias
-            .filter(seq => seq.contrato && seq.contrato.fornecedor)
+            .filter(seq => {
+                if (!seq.contrato || !seq.contrato.fornecedor) return false;
+
+                // Verificar se tem medição no ano selecionado
+                if (sequenciasComMedicao.has(seq._id.toString())) return true;
+
+                // Verificar se tem statusMensal no ano selecionado
+                if (seq.statusMensal) {
+                    const statusMap = seq.statusMensal instanceof Map ? seq.statusMensal : new Map(Object.entries(seq.statusMensal));
+                    for (const key of statusMap.keys()) {
+                        if (key.startsWith(anoFiltro.toString())) return true;
+                    }
+                }
+
+                return false;
+            })
             .map(seq => {
                 const medicaoRecente = medicoesPorSequencia[seq._id.toString()];
                 return {
