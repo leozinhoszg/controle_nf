@@ -161,6 +161,19 @@ export const usuariosAPI = {
   excluir: (id) => api.delete(`/usuarios/${id}`)
 };
 
+// ==================== MEU PERFIL ====================
+export const meuPerfilAPI = {
+  get: () => api.get('/auth/me'),
+  update: (data) => api.put('/auth/me', data),
+  updateFoto: (fotoPerfil) => api.put('/auth/me/foto', { fotoPerfil }),
+  changePassword: (senhaAtual, novaSenha) => api.put('/auth/me/senha', { senhaAtual, novaSenha }),
+  // Aliases em português
+  obter: () => api.get('/auth/me'),
+  atualizar: (data) => api.put('/auth/me', data),
+  atualizarFoto: (fotoPerfil) => api.put('/auth/me/foto', { fotoPerfil }),
+  alterarSenha: (senhaAtual, novaSenha) => api.put('/auth/me/senha', { senhaAtual, novaSenha })
+};
+
 // ==================== PERFIS ====================
 export const perfisAPI = {
   getAll: (params) => api.get('/perfis', { params }),

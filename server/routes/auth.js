@@ -25,6 +25,9 @@ router.post('/verificar-otp-reset', authController.verificarOtpResetSenha);
 router.post('/logout', autenticar, authController.logout);
 router.post('/logout-all', autenticar, authController.logoutAll);
 router.get('/me', autenticar, authController.getMe);
+router.put('/me', autenticar, authController.updateProfile);
+router.put('/me/foto', autenticar, authController.updateProfilePhoto);
+router.put('/me/senha', autenticar, authController.changePassword);
 router.get('/sessions', autenticar, authController.getSessions);
 
 module.exports = router;

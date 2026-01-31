@@ -16,6 +16,7 @@ import Fornecedores from './pages/Fornecedores';
 import Contratos from './pages/Contratos';
 import RelatorioMensal from './pages/RelatorioMensal';
 import Configuracoes from './pages/Configuracoes';
+import Perfil from './pages/Perfil';
 
 // Styles
 import './index.css';
@@ -44,6 +45,7 @@ function App() {
             }
           >
             <Route path="/" element={<Dashboard />} />
+            <Route path="/perfil" element={<Perfil />} />
             <Route path="/fornecedores" element={
               <ProtectedPermission permissao="fornecedores">
                 <Fornecedores />

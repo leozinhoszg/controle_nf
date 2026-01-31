@@ -12,6 +12,15 @@ const userSchema = new mongoose.Schema({
         minlength: [3, 'Usuario deve ter no minimo 3 caracteres'],
         maxlength: [30, 'Usuario deve ter no maximo 30 caracteres']
     },
+    nome: {
+        type: String,
+        trim: true,
+        maxlength: [100, 'Nome deve ter no maximo 100 caracteres']
+    },
+    fotoPerfil: {
+        type: String,
+        default: null
+    },
     email: {
         type: String,
         required: [true, 'Email e obrigatorio'],

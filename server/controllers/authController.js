@@ -127,7 +127,9 @@ exports.login = async (req, res) => {
             user: {
                 id: user._id,
                 usuario: user.usuario,
+                nome: user.nome,
                 email: user.email,
+                fotoPerfil: user.fotoPerfil,
                 perfil: user.perfil,
                 emailVerificado: user.emailVerificado
             },
@@ -421,12 +423,122 @@ exports.getMe = async (req, res) => {
         res.json({
             id: user._id,
             usuario: user.usuario,
+            nome: user.nome,
             email: user.email,
+            fotoPerfil: user.fotoPerfil,
             perfil: user.perfil,
             emailVerificado: user.emailVerificado,
             ultimoLogin: user.ultimoLogin,
             createdAt: user.createdAt
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Atualizar perfil do usuario autenticado
+exports.updateProfile = async (req, res) => {
+    try {
+        const { nome, email } = req.body;
+
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario nao encontrado' });
+        }
+
+        // Verificar se email ja existe em outro usuario
+        if (email && email !== user.email) {
+            const emailExiste = await User.findOne({ email, _id: { $ne: user._id } });
+            if (emailExiste) {
+                return res.status(400).json({ message: 'Email ja cadastrado' });
+            }
+            user.email = email;
+        }
+
+        if (nome !== undefined) {
+            user.nome = nome;
+        }
+
+        await user.save();
+
+        // Popular perfil para retornar
+        await user.populate('perfil', 'nome permissoes isAdmin');
+
+        res.json({
+            message: 'Perfil atualizado com sucesso',
+            user: {
+                id: user._id,
+                usuario: user.usuario,
+                nome: user.nome,
+                email: user.email,
+                fotoPerfil: user.fotoPerfil,
+                perfil: user.perfil,
+                emailVerificado: user.emailVerificado
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Atualizar foto de perfil do usuario autenticado
+exports.updateProfilePhoto = async (req, res) => {
+    try {
+        const { fotoPerfil } = req.body;
+
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario nao encontrado' });
+        }
+
+        // Validar tamanho da imagem base64 (max 500KB)
+        if (fotoPerfil && fotoPerfil.length > 700000) {
+            return res.status(400).json({ message: 'Imagem muito grande. Maximo 500KB.' });
+        }
+
+        user.fotoPerfil = fotoPerfil || null;
+        await user.save();
+
+        res.json({
+            message: 'Foto de perfil atualizada com sucesso',
+            fotoPerfil: user.fotoPerfil
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Alterar senha do usuario autenticado
+exports.changePassword = async (req, res) => {
+    try {
+        const { senhaAtual, novaSenha } = req.body;
+
+        if (!senhaAtual || !novaSenha) {
+            return res.status(400).json({ message: 'Senha atual e nova senha sao obrigatorias' });
+        }
+
+        if (novaSenha.length < 6) {
+            return res.status(400).json({ message: 'Nova senha deve ter no minimo 6 caracteres' });
+        }
+
+        const user = await User.findById(req.user.id).select('+senha');
+
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario nao encontrado' });
+        }
+
+        // Verificar senha atual
+        const senhaCorreta = await user.compararSenha(senhaAtual);
+        if (!senhaCorreta) {
+            return res.status(400).json({ message: 'Senha atual incorreta' });
+        }
+
+        user.senha = novaSenha;
+        await user.save();
+
+        res.json({ message: 'Senha alterada com sucesso' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
