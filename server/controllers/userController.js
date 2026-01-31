@@ -1,5 +1,6 @@
 const { User, Perfil } = require('../models');
 const emailService = require('../services/emailService');
+const auditService = require('../services/auditService');
 
 // Listar todos os usuarios
 exports.getAll = async (req, res) => {
@@ -115,6 +116,26 @@ exports.create = async (req, res) => {
             .select('-tokenVerificacaoEmail -tokenVerificacaoExpira -tokenResetSenha -tokenResetExpira -tentativasLogin -bloqueadoAte')
             .populate('perfil', 'nome permissoes isAdmin');
 
+        // Buscar nome do perfil para auditoria
+        let perfilNome = null;
+        if (perfil) {
+            const perfilDoc = await Perfil.findById(perfil).select('nome');
+            perfilNome = perfilDoc?.nome || null;
+        }
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'CRIAR', 'USUARIO', 'User', {
+            recursoId: novoUsuario._id,
+            recursoNome: novoUsuario.usuario,
+            descricao: `Usuario criado: ${novoUsuario.usuario}`,
+            dadosNovos: {
+                usuario,
+                email,
+                perfil: perfilNome ? `${perfilNome} (${perfil})` : null,
+                ativo: ativo !== undefined ? ativo : true
+            }
+        });
+
         res.status(201).json({
             message: 'Usuario criado com sucesso',
             usuario: usuarioResponse,
@@ -171,6 +192,28 @@ exports.update = async (req, res) => {
         if (perfil !== undefined) camposAtualizar.perfil = perfil || null;
         if (ativo !== undefined) camposAtualizar.ativo = ativo;
 
+        // Buscar nomes dos perfis para auditoria
+        let perfilAnteriorNome = null;
+        let perfilNovoNome = null;
+
+        if (usuarioExistente.perfil) {
+            const perfilAnteriorDoc = await Perfil.findById(usuarioExistente.perfil).select('nome');
+            perfilAnteriorNome = perfilAnteriorDoc?.nome || null;
+        }
+
+        if (perfil) {
+            const perfilNovoDoc = await Perfil.findById(perfil).select('nome');
+            perfilNovoNome = perfilNovoDoc?.nome || null;
+        }
+
+        // Dados anteriores para auditoria
+        const dadosAnteriores = {
+            usuario: usuarioExistente.usuario,
+            email: usuarioExistente.email,
+            perfil: perfilAnteriorNome ? `${perfilAnteriorNome} (${usuarioExistente.perfil})` : null,
+            ativo: usuarioExistente.ativo
+        };
+
         const usuarioAtualizado = await User.findByIdAndUpdate(
             userId,
             camposAtualizar,
@@ -178,6 +221,21 @@ exports.update = async (req, res) => {
         )
             .select('-tokenVerificacaoEmail -tokenVerificacaoExpira -tokenResetSenha -tokenResetExpira -tentativasLogin -bloqueadoAte')
             .populate('perfil', 'nome permissoes isAdmin');
+
+        // Preparar dados novos para auditoria
+        const dadosNovosAuditoria = { ...camposAtualizar };
+        if (perfil !== undefined) {
+            dadosNovosAuditoria.perfil = perfilNovoNome ? `${perfilNovoNome} (${perfil})` : null;
+        }
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'ATUALIZAR', 'USUARIO', 'User', {
+            recursoId: userId,
+            recursoNome: usuarioAtualizado.usuario,
+            descricao: `Usuario atualizado: ${usuarioAtualizado.usuario}`,
+            dadosAnteriores,
+            dadosNovos: dadosNovosAuditoria
+        });
 
         res.json({
             message: 'Usuario atualizado com sucesso',
@@ -205,6 +263,15 @@ exports.delete = async (req, res) => {
 
         await User.findByIdAndDelete(userId);
 
+        // Log de auditoria
+        await auditService.logCrud(req, 'EXCLUIR', 'USUARIO', 'User', {
+            recursoId: userId,
+            recursoNome: usuario.usuario,
+            descricao: `Usuario excluido: ${usuario.usuario}`,
+            dadosAnteriores: { usuario: usuario.usuario, email: usuario.email },
+            nivel: 'CRITICAL'
+        });
+
         res.json({ message: 'Usuario excluido com sucesso' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -229,6 +296,14 @@ exports.alterarSenha = async (req, res) => {
         usuario.senha = novaSenha;
         await usuario.save();
 
+        // Log de auditoria
+        await auditService.logCrud(req, 'SENHA_RESET', 'USUARIO', 'User', {
+            recursoId: userId,
+            recursoNome: usuario.usuario,
+            descricao: `Senha redefinida por admin: ${usuario.usuario}`,
+            nivel: 'CRITICAL'
+        });
+
         res.json({ message: 'Senha alterada com sucesso' });
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -250,8 +325,19 @@ exports.toggleAtivo = async (req, res) => {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
 
+        const ativoAnterior = usuario.ativo;
         usuario.ativo = !usuario.ativo;
         await usuario.save();
+
+        // Log de auditoria
+        await auditService.logCrud(req, usuario.ativo ? 'ATIVAR' : 'DESATIVAR', 'USUARIO', 'User', {
+            recursoId: userId,
+            recursoNome: usuario.usuario,
+            descricao: `Usuario ${usuario.ativo ? 'ativado' : 'desativado'}: ${usuario.usuario}`,
+            dadosAnteriores: { ativo: ativoAnterior },
+            dadosNovos: { ativo: usuario.ativo },
+            nivel: 'WARN'
+        });
 
         res.json({
             message: `Usuario ${usuario.ativo ? 'ativado' : 'desativado'} com sucesso`,

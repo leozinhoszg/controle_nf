@@ -7,6 +7,7 @@ const medicaoController = require('./medicaoController');
 const authController = require('./authController');
 const userController = require('./userController');
 const perfilController = require('./perfilController');
+const auditController = require('./auditController');
 
 module.exports = {
     fornecedorController,
@@ -17,5 +18,6 @@ module.exports = {
     medicaoController,
     authController,
     userController,
-    perfilController
+    perfilController,
+    auditController
 };

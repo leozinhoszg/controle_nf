@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { sequenciaController } = require('../controllers');
+const { autenticar, autorizarPermissao } = require('../middleware/auth');
+
+// Todas as rotas requerem autenticacao e permissao de contratos (sequencias fazem parte de contratos)
+router.use(autenticar);
+router.use(autorizarPermissao('contratos'));
 
 router.get('/', sequenciaController.getAll);
 router.get('/buscar', sequenciaController.buscar);

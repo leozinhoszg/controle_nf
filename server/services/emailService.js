@@ -9,6 +9,7 @@ const {
     templateResetSenhaLink,
     APP_NAME
 } = require('./emailTemplates');
+const auditService = require('./auditService');
 
 // Verificar se SMTP esta habilitado
 const isSmtpEnabled = () => {
@@ -57,9 +58,32 @@ const verificarConexaoSmtp = async () => {
 };
 
 // Funcao base para enviar email
-const enviarEmail = async (to, subject, html) => {
+const enviarEmail = async (to, subject, html, tipoEmail = 'GERAL', usuarioRelacionado = null) => {
+    const dadosEmail = {
+        destinatario: to,
+        assunto: subject,
+        tipo: tipoEmail,
+        smtpHabilitado: isSmtpEnabled()
+    };
+
     if (!isSmtpEnabled()) {
         console.log(`[EMAIL DESABILITADO] Para: ${to}, Assunto: ${subject}`);
+
+        // Log de auditoria - email nao enviado (SMTP desabilitado)
+        await auditService.registrar({
+            usuarioId: usuarioRelacionado?._id || null,
+            usuarioNome: usuarioRelacionado?.usuario || 'Sistema',
+            usuarioEmail: usuarioRelacionado?.email || null,
+            acao: 'EMAIL_FALHA',
+            categoria: 'EMAIL',
+            nivel: 'WARN',
+            recurso: 'Email',
+            descricao: `Email nao enviado (SMTP desabilitado): ${tipoEmail} para ${to}`,
+            sucesso: false,
+            mensagemErro: 'SMTP desabilitado nas configuracoes',
+            metadados: dadosEmail
+        });
+
         return { success: false, reason: 'SMTP desabilitado' };
     }
 
@@ -74,9 +98,43 @@ const enviarEmail = async (to, subject, html) => {
         const transport = getTransporter();
         const info = await transport.sendMail(mailOptions);
         console.log(`Email enviado para ${to}: ${info.messageId}`);
+
+        // Log de auditoria - email enviado com sucesso
+        await auditService.registrar({
+            usuarioId: usuarioRelacionado?._id || null,
+            usuarioNome: usuarioRelacionado?.usuario || 'Sistema',
+            usuarioEmail: usuarioRelacionado?.email || null,
+            acao: 'EMAIL_ENVIADO',
+            categoria: 'EMAIL',
+            nivel: 'INFO',
+            recurso: 'Email',
+            descricao: `Email enviado: ${tipoEmail} para ${to}`,
+            sucesso: true,
+            metadados: {
+                ...dadosEmail,
+                messageId: info.messageId
+            }
+        });
+
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error(`Erro ao enviar email para ${to}:`, error.message);
+
+        // Log de auditoria - falha no envio
+        await auditService.registrar({
+            usuarioId: usuarioRelacionado?._id || null,
+            usuarioNome: usuarioRelacionado?.usuario || 'Sistema',
+            usuarioEmail: usuarioRelacionado?.email || null,
+            acao: 'EMAIL_FALHA',
+            categoria: 'EMAIL',
+            nivel: 'ERROR',
+            recurso: 'Email',
+            descricao: `Falha ao enviar email: ${tipoEmail} para ${to}`,
+            sucesso: false,
+            mensagemErro: error.message,
+            metadados: dadosEmail
+        });
+
         throw error;
     }
 };
@@ -101,7 +159,7 @@ const emailService = {
         const html = templateOtpResetSenha(user.usuario, codigoOtp);
 
         try {
-            await enviarEmail(user.email, 'Codigo de Redefinicao de Senha', html);
+            await enviarEmail(user.email, 'Codigo de Redefinicao de Senha', html, 'OTP_RESET_SENHA', user);
             console.log(`OTP de reset enviado para: ${user.email}`);
             return true;
         } catch (error) {
@@ -119,7 +177,7 @@ const emailService = {
         const html = templateOtpVerificacaoEmail(user.usuario, codigoOtp);
 
         try {
-            await enviarEmail(user.email, 'Codigo de Verificacao de Email', html);
+            await enviarEmail(user.email, 'Codigo de Verificacao de Email', html, 'OTP_VERIFICACAO_EMAIL', user);
             console.log(`OTP de verificacao enviado para: ${user.email}`);
             return true;
         } catch (error) {
@@ -137,7 +195,7 @@ const emailService = {
         const html = templateNovoUsuario(user.usuario, user.email, senhaTemporaria);
 
         try {
-            await enviarEmail(user.email, 'Bem-vindo ao Sistema', html);
+            await enviarEmail(user.email, 'Bem-vindo ao Sistema', html, 'BOAS_VINDAS', user);
             console.log(`Email de boas-vindas enviado para: ${user.email}`);
             return true;
         } catch (error) {
@@ -156,7 +214,7 @@ const emailService = {
         const html = templateVerificacaoEmail(user.usuario, urlVerificacao);
 
         try {
-            await enviarEmail(user.email, 'Verifique seu Email', html);
+            await enviarEmail(user.email, 'Verifique seu Email', html, 'VERIFICACAO_EMAIL', user);
             console.log(`Email de verificacao enviado para: ${user.email}`);
             return true;
         } catch (error) {
@@ -175,7 +233,7 @@ const emailService = {
         const html = templateResetSenhaLink(user.usuario, urlReset);
 
         try {
-            await enviarEmail(user.email, 'Redefinicao de Senha', html);
+            await enviarEmail(user.email, 'Redefinicao de Senha', html, 'RESET_SENHA', user);
             console.log(`Email de reset enviado para: ${user.email}`);
             return true;
         } catch (error) {
@@ -197,7 +255,7 @@ const emailService = {
         });
 
         try {
-            await enviarEmail(user.email, 'Novo Login Detectado', html);
+            await enviarEmail(user.email, 'Novo Login Detectado', html, 'ALERTA_LOGIN', user);
             console.log(`Alerta de login enviado para: ${user.email}`);
             return true;
         } catch (error) {
@@ -214,7 +272,7 @@ const emailService = {
         const html = templateSenhaAlterada(user.usuario);
 
         try {
-            await enviarEmail(user.email, 'Senha Alterada com Sucesso', html);
+            await enviarEmail(user.email, 'Senha Alterada com Sucesso', html, 'CONFIRMACAO_SENHA', user);
             console.log(`Confirmacao de alteracao de senha enviada para: ${user.email}`);
             return true;
         } catch (error) {

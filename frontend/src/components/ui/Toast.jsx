@@ -9,7 +9,7 @@ export default function Toast({ toasts }) {
   };
 
   return (
-    <div className="toast toast-end toast-bottom z-50">
+    <div className="toast toast-end toast-bottom z-60">
       {toasts.map(toast => (
         <div key={toast.id} className={`alert ${typeClasses[toast.type]} shadow-lg`}>
           <span>{toast.message}</span>

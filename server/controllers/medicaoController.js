@@ -1,5 +1,6 @@
 const { Medicao, Sequencia, Contrato } = require('../models');
 const medicaoService = require('../services/medicaoService');
+const auditService = require('../services/auditService');
 
 // Listar medições de uma sequência
 exports.getBySequencia = async (req, res) => {
@@ -87,6 +88,18 @@ exports.sincronizar = async (req, res) => {
         const medicoes = await medicaoService.sincronizarMedicoes(sequencia);
         await medicaoService.atualizarStatusMensal(sequenciaId);
 
+        // Log de auditoria
+        await auditService.logCrud(req, 'SINCRONIZAR', 'MEDICAO', 'Medicao', {
+            recursoId: sequenciaId,
+            recursoNome: `Seq ${sequencia['num-seq-item']}`,
+            descricao: `Medicoes sincronizadas: Contrato ${sequencia.contrato?.['nr-contrato']} Seq ${sequencia['num-seq-item']}`,
+            metadados: {
+                contrato: sequencia.contrato?.['nr-contrato'],
+                estabelecimento: sequencia.contrato?.['cod-estabel'],
+                medicoesProcessadas: medicoes.length
+            }
+        });
+
         res.json({
             message: 'Sincronização concluída',
             sequencia: {
@@ -110,6 +123,17 @@ exports.sincronizarTodas = async (req, res) => {
 
         const sucessos = resultados.filter(r => r.sucesso).length;
         const erros = resultados.filter(r => !r.sucesso).length;
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'SINCRONIZAR_LOTE', 'MEDICAO', 'Medicao', {
+            descricao: `Sincronizacao em lote: ${sucessos} sucessos, ${erros} erros`,
+            metadados: {
+                total: resultados.length,
+                sucessos,
+                erros
+            },
+            nivel: erros > 0 ? 'WARN' : 'INFO'
+        });
 
         res.json({
             message: 'Sincronização em lote concluída',

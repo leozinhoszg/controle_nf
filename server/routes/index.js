@@ -10,6 +10,7 @@ const medicoesRoutes = require('./medicoes');
 const authRoutes = require('./auth');
 const usuariosRoutes = require('./usuarios');
 const perfisRoutes = require('./perfis');
+const auditoriaRoutes = require('./auditoria');
 
 // Rotas de autenticacao
 router.use('/auth', authRoutes);
@@ -23,5 +24,6 @@ router.use('/webhooks', webhooksRoutes);
 router.use('/medicoes', medicoesRoutes);
 router.use('/usuarios', usuariosRoutes);
 router.use('/perfis', perfisRoutes);
+router.use('/auditoria', auditoriaRoutes);
 
 module.exports = router;

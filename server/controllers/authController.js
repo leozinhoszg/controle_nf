@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { User, RefreshToken } = require('../models');
 const authService = require('../services/authService');
 const emailService = require('../services/emailService');
+const auditService = require('../services/auditService');
 
 // Registrar novo usuario
 exports.register = async (req, res) => {
@@ -43,6 +44,13 @@ exports.register = async (req, res) => {
             // Nao falha o registro se email falhar
         }
 
+        // Log de auditoria
+        await auditService.logAuth(req, 'REGISTRO', `Novo usuario registrado: ${user.usuario}`, {
+            usuarioId: user._id,
+            usuarioNome: user.usuario,
+            metadados: { email: user.email }
+        });
+
         res.status(201).json({
             message: 'Usuario registrado com sucesso. Verifique seu email.',
             user: {
@@ -72,12 +80,24 @@ exports.login = async (req, res) => {
             .populate('perfil', 'nome permissoes isAdmin');
 
         if (!user) {
+            // Log de tentativa de login com usuario inexistente
+            await auditService.logAuth(req, 'LOGIN_FALHA', `Tentativa de login com usuario inexistente: ${usuario}`, {
+                sucesso: false,
+                metadados: { usuarioTentativa: usuario }
+            });
             return res.status(401).json({ message: 'Credenciais invalidas' });
         }
 
         // Verificar se conta esta bloqueada
         if (user.bloqueadoAte && user.bloqueadoAte > Date.now()) {
             const minutosRestantes = Math.ceil((user.bloqueadoAte - Date.now()) / 60000);
+            await auditService.logAuth(req, 'LOGIN_BLOQUEADO', `Tentativa de login em conta bloqueada: ${user.usuario}`, {
+                sucesso: false,
+                usuarioId: user._id,
+                usuarioNome: user.usuario,
+                nivel: 'WARN',
+                metadados: { minutosRestantes }
+            });
             return res.status(423).json({
                 message: `Conta bloqueada. Tente novamente em ${minutosRestantes} minutos.`
             });
@@ -94,6 +114,19 @@ exports.login = async (req, res) => {
             if (user.tentativasLogin >= 5) {
                 user.bloqueadoAte = Date.now() + 15 * 60 * 1000; // 15 minutos
                 user.tentativasLogin = 0;
+                await auditService.logAuth(req, 'LOGIN_BLOQUEADO', `Conta bloqueada apos 5 tentativas falhas: ${user.usuario}`, {
+                    sucesso: false,
+                    usuarioId: user._id,
+                    usuarioNome: user.usuario,
+                    nivel: 'CRITICAL'
+                });
+            } else {
+                await auditService.logAuth(req, 'LOGIN_FALHA', `Senha incorreta para usuario: ${user.usuario}`, {
+                    sucesso: false,
+                    usuarioId: user._id,
+                    usuarioNome: user.usuario,
+                    metadados: { tentativasRestantes: 5 - user.tentativasLogin }
+                });
             }
 
             await user.save();
@@ -121,6 +154,13 @@ exports.login = async (req, res) => {
 
         // Gerar tokens
         const tokens = await authService.gerarTokens(user, ipAddress, userAgent);
+
+        // Log de auditoria - login bem-sucedido
+        await auditService.logAuth(req, 'LOGIN_SUCESSO', `Login realizado: ${user.usuario}`, {
+            usuarioId: user._id,
+            usuarioNome: user.usuario,
+            metadados: { perfil: user.perfil?.nome }
+        });
 
         res.json({
             message: 'Login realizado com sucesso',
@@ -150,6 +190,9 @@ exports.logout = async (req, res) => {
             await authService.revogarToken(refreshToken, ipAddress);
         }
 
+        // Log de auditoria
+        await auditService.logAuth(req, 'LOGOUT', 'Logout realizado');
+
         res.json({ message: 'Logout realizado com sucesso' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -161,6 +204,11 @@ exports.logoutAll = async (req, res) => {
     try {
         const ipAddress = req.ip || req.connection.remoteAddress;
         await authService.revogarTodosTokens(req.user.id, ipAddress);
+
+        // Log de auditoria
+        await auditService.logAuth(req, 'LOGOUT_TODOS', 'Logout de todos os dispositivos', {
+            nivel: 'WARN'
+        });
 
         res.json({ message: 'Logout realizado em todos os dispositivos' });
     } catch (error) {
@@ -211,6 +259,12 @@ exports.verifyEmail = async (req, res) => {
         user.tokenVerificacaoEmail = undefined;
         user.tokenVerificacaoExpira = undefined;
         await user.save();
+
+        // Log de auditoria
+        await auditService.logAuth(req, 'EMAIL_VERIFICADO', `Email verificado: ${user.email}`, {
+            usuarioId: user._id,
+            usuarioNome: user.usuario
+        });
 
         res.json({ message: 'Email verificado com sucesso! Voce ja pode fazer login.' });
     } catch (error) {
@@ -307,6 +361,13 @@ exports.solicitarOtpResetSenha = async (req, res) => {
             return res.status(500).json({ message: 'Erro ao enviar email. Tente novamente.' });
         }
 
+        // Log de auditoria
+        await auditService.logAuth(req, 'OTP_SOLICITADO', `OTP solicitado para reset de senha: ${user.email}`, {
+            usuarioId: user._id,
+            usuarioNome: user.usuario,
+            nivel: 'WARN'
+        });
+
         res.json({
             message: 'Codigo de verificacao enviado para seu email.',
             expiresIn: '15 minutos'
@@ -366,6 +427,13 @@ exports.verificarOtpResetSenha = async (req, res) => {
             console.error('Erro ao enviar confirmacao:', emailError);
         }
 
+        // Log de auditoria
+        await auditService.logAuth(req, 'SENHA_RESET', `Senha redefinida via OTP: ${user.usuario}`, {
+            usuarioId: user._id,
+            usuarioNome: user.usuario,
+            nivel: 'CRITICAL'
+        });
+
         res.json({ message: 'Senha alterada com sucesso!' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -403,6 +471,13 @@ exports.resetPassword = async (req, res) => {
         // Revogar todos os refresh tokens por seguranca
         const ipAddress = req.ip || req.connection.remoteAddress;
         await authService.revogarTodosTokens(user._id, ipAddress);
+
+        // Log de auditoria
+        await auditService.logAuth(req, 'SENHA_RESET', `Senha redefinida via token: ${user.usuario}`, {
+            usuarioId: user._id,
+            usuarioNome: user.usuario,
+            nivel: 'CRITICAL'
+        });
 
         res.json({ message: 'Senha alterada com sucesso' });
     } catch (error) {
@@ -538,6 +613,11 @@ exports.changePassword = async (req, res) => {
         user.senha = novaSenha;
         await user.save();
 
+        // Log de auditoria
+        await auditService.logAuth(req, 'SENHA_ALTERADA', 'Senha alterada pelo usuario', {
+            nivel: 'WARN'
+        });
+
         res.json({ message: 'Senha alterada com sucesso' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -620,6 +700,9 @@ exports.verificarOtpEmail = async (req, res) => {
         user.otpCode = undefined;
         user.otpExpira = undefined;
         await user.save();
+
+        // Log de auditoria
+        await auditService.logAuth(req, 'EMAIL_VERIFICADO', 'Email verificado via OTP');
 
         res.json({
             message: 'Email verificado com sucesso!',

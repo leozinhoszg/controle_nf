@@ -1,4 +1,5 @@
 const { Fornecedor, Contrato, Sequencia } = require('../models');
+const auditService = require('../services/auditService');
 
 // Listar todos os fornecedores
 exports.getAll = async (req, res) => {
@@ -30,6 +31,15 @@ exports.create = async (req, res) => {
             nome: req.body.nome
         });
         const novoFornecedor = await fornecedor.save();
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'CRIAR', 'FORNECEDOR', 'Fornecedor', {
+            recursoId: novoFornecedor._id,
+            recursoNome: novoFornecedor.nome,
+            descricao: `Fornecedor criado: ${novoFornecedor.nome}`,
+            dadosNovos: { nome: novoFornecedor.nome }
+        });
+
         res.status(201).json(novoFornecedor);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -39,14 +49,27 @@ exports.create = async (req, res) => {
 // Atualizar fornecedor
 exports.update = async (req, res) => {
     try {
+        // Buscar dados anteriores para auditoria
+        const fornecedorAnterior = await Fornecedor.findById(req.params.id);
+        if (!fornecedorAnterior) {
+            return res.status(404).json({ message: 'Fornecedor nao encontrado' });
+        }
+
         const fornecedor = await Fornecedor.findByIdAndUpdate(
             req.params.id,
             { nome: req.body.nome },
             { new: true, runValidators: true }
         );
-        if (!fornecedor) {
-            return res.status(404).json({ message: 'Fornecedor nao encontrado' });
-        }
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'ATUALIZAR', 'FORNECEDOR', 'Fornecedor', {
+            recursoId: fornecedor._id,
+            recursoNome: fornecedor.nome,
+            descricao: `Fornecedor atualizado: ${fornecedor.nome}`,
+            dadosAnteriores: { nome: fornecedorAnterior.nome },
+            dadosNovos: { nome: fornecedor.nome }
+        });
+
         res.json(fornecedor);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -73,6 +96,19 @@ exports.delete = async (req, res) => {
 
         // Excluir fornecedor
         await Fornecedor.findByIdAndDelete(req.params.id);
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'EXCLUIR', 'FORNECEDOR', 'Fornecedor', {
+            recursoId: req.params.id,
+            recursoNome: fornecedor.nome,
+            descricao: `Fornecedor excluido em cascata: ${fornecedor.nome}`,
+            dadosAnteriores: { nome: fornecedor.nome },
+            metadados: {
+                contratosExcluidos: contratos.length,
+                sequenciasExcluidas: contratoIds.length > 0 ? 'sim' : 'nao'
+            },
+            nivel: 'CRITICAL'
+        });
 
         res.json({ message: 'Fornecedor excluido com sucesso' });
     } catch (error) {

@@ -6,6 +6,7 @@ const Medicao = require('./Medicao');
 const User = require('./User');
 const RefreshToken = require('./RefreshToken');
 const Perfil = require('./Perfil');
+const AuditLog = require('./AuditLog');
 
 module.exports = {
     Fornecedor,
@@ -15,5 +16,6 @@ module.exports = {
     Medicao,
     User,
     RefreshToken,
-    Perfil
+    Perfil,
+    AuditLog
 };

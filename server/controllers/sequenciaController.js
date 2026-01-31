@@ -1,4 +1,5 @@
 const { Sequencia } = require('../models');
+const auditService = require('../services/auditService');
 
 // Listar todas as sequencias
 exports.getAll = async (req, res) => {
@@ -99,6 +100,20 @@ exports.create = async (req, res) => {
                 path: 'contrato',
                 populate: { path: 'fornecedor', select: 'nome' }
             });
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'CRIAR', 'SEQUENCIA', 'Sequencia', {
+            recursoId: novaSequencia._id,
+            recursoNome: `Seq ${novaSequencia['num-seq-item']}`,
+            descricao: `Sequencia criada: ${novaSequencia['num-seq-item']} - Contrato ${sequenciaPopulada.contrato?.['nr-contrato']}`,
+            dadosNovos: {
+                'num-seq-item': novaSequencia['num-seq-item'],
+                diaEmissao: novaSequencia.diaEmissao,
+                valor: novaSequencia.valor,
+                contrato: sequenciaPopulada.contrato?.['nr-contrato']
+            }
+        });
+
         res.status(201).json(sequenciaPopulada);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -108,6 +123,12 @@ exports.create = async (req, res) => {
 // Atualizar sequencia
 exports.update = async (req, res) => {
     try {
+        // Buscar dados anteriores para auditoria
+        const sequenciaAnterior = await Sequencia.findById(req.params.id);
+        if (!sequenciaAnterior) {
+            return res.status(404).json({ message: 'Sequencia nao encontrada' });
+        }
+
         const updateData = {};
         if (req.body.contrato) updateData.contrato = req.body.contrato;
         if (req.body['num-seq-item'] !== undefined) updateData['num-seq-item'] = req.body['num-seq-item'];
@@ -124,9 +145,19 @@ exports.update = async (req, res) => {
             populate: { path: 'fornecedor', select: 'nome' }
         });
 
-        if (!sequencia) {
-            return res.status(404).json({ message: 'Sequencia nao encontrada' });
-        }
+        // Log de auditoria
+        await auditService.logCrud(req, 'ATUALIZAR', 'SEQUENCIA', 'Sequencia', {
+            recursoId: sequencia._id,
+            recursoNome: `Seq ${sequencia['num-seq-item']}`,
+            descricao: `Sequencia atualizada: ${sequencia['num-seq-item']}`,
+            dadosAnteriores: {
+                'num-seq-item': sequenciaAnterior['num-seq-item'],
+                diaEmissao: sequenciaAnterior.diaEmissao,
+                valor: sequenciaAnterior.valor
+            },
+            dadosNovos: updateData
+        });
+
         res.json(sequencia);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -147,6 +178,7 @@ exports.updateStatus = async (req, res) => {
             return res.status(404).json({ message: 'Sequencia nao encontrada' });
         }
 
+        const statusAnterior = sequencia.statusMensal.get(monthKey);
         sequencia.statusMensal.set(monthKey, status);
         await sequencia.save();
 
@@ -155,6 +187,16 @@ exports.updateStatus = async (req, res) => {
                 path: 'contrato',
                 populate: { path: 'fornecedor', select: 'nome' }
             });
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'ATUALIZAR', 'SEQUENCIA', 'Sequencia', {
+            recursoId: sequencia._id,
+            recursoNome: `Seq ${sequencia['num-seq-item']}`,
+            descricao: `Status mensal atualizado: ${monthKey} - ${statusAnterior || 'vazio'} -> ${status}`,
+            dadosAnteriores: { [monthKey]: statusAnterior },
+            dadosNovos: { [monthKey]: status },
+            metadados: { mes: monthKey }
+        });
 
         res.json(sequenciaAtualizada);
     } catch (error) {
@@ -165,10 +207,31 @@ exports.updateStatus = async (req, res) => {
 // Excluir sequencia
 exports.delete = async (req, res) => {
     try {
-        const sequencia = await Sequencia.findByIdAndDelete(req.params.id);
+        // Buscar dados antes de excluir para auditoria
+        const sequencia = await Sequencia.findById(req.params.id).populate({
+            path: 'contrato',
+            populate: { path: 'fornecedor', select: 'nome' }
+        });
         if (!sequencia) {
             return res.status(404).json({ message: 'Sequencia nao encontrada' });
         }
+
+        await Sequencia.findByIdAndDelete(req.params.id);
+
+        // Log de auditoria
+        await auditService.logCrud(req, 'EXCLUIR', 'SEQUENCIA', 'Sequencia', {
+            recursoId: req.params.id,
+            recursoNome: `Seq ${sequencia['num-seq-item']}`,
+            descricao: `Sequencia excluida: ${sequencia['num-seq-item']} - Contrato ${sequencia.contrato?.['nr-contrato']}`,
+            dadosAnteriores: {
+                'num-seq-item': sequencia['num-seq-item'],
+                diaEmissao: sequencia.diaEmissao,
+                valor: sequencia.valor,
+                contrato: sequencia.contrato?.['nr-contrato']
+            },
+            nivel: 'WARN'
+        });
+
         res.json({ message: 'Sequencia excluida com sucesso' });
     } catch (error) {
         res.status(500).json({ message: error.message });

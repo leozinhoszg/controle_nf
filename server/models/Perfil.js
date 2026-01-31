@@ -21,7 +21,8 @@ const perfilSchema = new mongoose.Schema({
             'contratos',
             'relatorio',
             'usuarios',
-            'perfis'
+            'perfis',
+            'auditoria'
         ]
     }],
     isAdmin: {

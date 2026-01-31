@@ -10,8 +10,8 @@ export default function Modal({ isOpen, onClose, title, children, actions, size 
   };
 
   return (
-    <dialog className="modal modal-open">
-      <div className={`modal-box glass-modal animate-fadeInUp ${sizeClasses[size]}`}>
+    <dialog className="modal modal-open z-50">
+      <div className={`modal-box glass-modal animate-fadeInUp max-h-[85vh] overflow-y-auto ${sizeClasses[size]}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-200/30">
           <h3 className="font-bold text-xl text-gradient">{title}</h3>

@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { medicaoController } = require('../controllers');
+const { autenticar, autorizarPermissao } = require('../middleware/auth');
+
+// Todas as rotas requerem autenticacao e permissao de contratos (medicoes fazem parte de contratos)
+router.use(autenticar);
+router.use(autorizarPermissao('contratos'));
 
 // GET /api/medicoes/buscar?contrato=369&estabelecimento=01&sequencia=1
 router.get('/buscar', medicaoController.buscar);

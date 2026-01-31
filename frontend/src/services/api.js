@@ -194,3 +194,20 @@ export const perfisAPI = {
   excluir: (id) => api.delete(`/perfis/${id}`),
   listarPermissoes: () => api.get('/perfis/permissoes')
 };
+
+// ==================== AUDITORIA ====================
+export const auditoriaAPI = {
+  // Listar logs com filtros e paginacao
+  listar: (params) => api.get('/auditoria', { params }),
+  // Estatisticas
+  estatisticas: (periodo) => api.get('/auditoria/estatisticas', { params: { periodo } }),
+  // Categorias e acoes disponiveis
+  categorias: () => api.get('/auditoria/categorias'),
+  acoes: () => api.get('/auditoria/acoes'),
+  // Historico de um recurso
+  historico: (recurso, recursoId, limite) => api.get(`/auditoria/historico/${recurso}/${recursoId}`, { params: { limite } }),
+  // Logs de um usuario
+  logsPorUsuario: (usuarioId, limite) => api.get(`/auditoria/usuario/${usuarioId}`, { params: { limite } }),
+  // Exportar logs
+  exportar: (params) => api.get('/auditoria/exportar', { params, responseType: params.formato === 'csv' ? 'blob' : 'json' })
+};

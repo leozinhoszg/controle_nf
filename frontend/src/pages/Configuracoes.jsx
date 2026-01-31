@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { usuariosAPI, perfisAPI } from '../services/api';
+import { usuariosAPI, perfisAPI, auditoriaAPI } from '../services/api';
 import Modal, { FormField } from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Loading from '../components/ui/Loading';
@@ -17,12 +17,13 @@ export default function Configuracoes() {
   // Verificar permissões
   const permissoes = useMemo(() => {
     const perfil = usuarioLogado?.perfil;
-    if (!perfil) return { usuarios: false, perfis: false };
-    if (perfil.isAdmin) return { usuarios: true, perfis: true };
+    if (!perfil) return { usuarios: false, perfis: false, auditoria: false };
+    if (perfil.isAdmin) return { usuarios: true, perfis: true, auditoria: true };
     const perms = perfil.permissoes || [];
     return {
       usuarios: perms.includes('usuarios'),
-      perfis: perms.includes('perfis')
+      perfis: perms.includes('perfis'),
+      auditoria: perms.includes('auditoria')
     };
   }, [usuarioLogado?.perfil]);
 
@@ -30,6 +31,8 @@ export default function Configuracoes() {
   useEffect(() => {
     if (!permissoes.usuarios && permissoes.perfis) {
       setActiveTab('perfis');
+    } else if (!permissoes.usuarios && !permissoes.perfis && permissoes.auditoria) {
+      setActiveTab('auditoria');
     }
   }, [permissoes]);
 
@@ -67,6 +70,17 @@ export default function Configuracoes() {
             Perfis
           </button>
         )}
+        {permissoes.auditoria && (
+          <button
+            className={`tab ${activeTab === 'auditoria' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('auditoria')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Auditoria
+          </button>
+        )}
       </div>
 
       {/* Conteudo das Tabs */}
@@ -75,6 +89,9 @@ export default function Configuracoes() {
       )}
       {activeTab === 'perfis' && permissoes.perfis && (
         <PerfisTab showToast={showToast} />
+      )}
+      {activeTab === 'auditoria' && permissoes.auditoria && (
+        <AuditoriaTab showToast={showToast} />
       )}
     </div>
   );
@@ -670,6 +687,510 @@ function PerfisTab({ showToast }) {
         confirmText="Excluir"
         variant="error"
       />
+    </>
+  );
+}
+
+// ==================== TAB DE AUDITORIA ====================
+function AuditoriaTab({ showToast }) {
+  const [logs, setLogs] = useState([]);
+  const [estatisticas, setEstatisticas] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Paginacao
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const limite = 20;
+
+  // Filtros
+  const [filtros, setFiltros] = useState({
+    categoria: '',
+    nivel: '',
+    dataInicio: '',
+    dataFim: '',
+    busca: ''
+  });
+
+  // Detalhes do log selecionado
+  const [logSelecionado, setLogSelecionado] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const categorias = [
+    { id: 'AUTH', nome: 'Autenticacao' },
+    { id: 'USUARIO', nome: 'Usuarios' },
+    { id: 'PERFIL', nome: 'Perfis' },
+    { id: 'FORNECEDOR', nome: 'Fornecedores' },
+    { id: 'CONTRATO', nome: 'Contratos' },
+    { id: 'SEQUENCIA', nome: 'Sequencias' },
+    { id: 'MEDICAO', nome: 'Medicoes' },
+    { id: 'SISTEMA', nome: 'Sistema' },
+    { id: 'EMAIL', nome: 'Emails' }
+  ];
+
+  const niveis = [
+    { id: 'INFO', nome: 'Info', cor: 'badge-info' },
+    { id: 'WARN', nome: 'Aviso', cor: 'badge-warning' },
+    { id: 'ERROR', nome: 'Erro', cor: 'badge-error' },
+    { id: 'CRITICAL', nome: 'Critico', cor: 'badge-error' }
+  ];
+
+  useEffect(() => {
+    loadData();
+  }, [pagina, filtros]);
+
+  useEffect(() => {
+    loadEstatisticas();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      if (pagina === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const params = {
+        pagina,
+        limite,
+        ...filtros
+      };
+
+      // Remover campos vazios
+      Object.keys(params).forEach(key => {
+        if (!params[key]) delete params[key];
+      });
+
+      const response = await auditoriaAPI.listar(params);
+      setLogs(response.data.logs || []);
+      setTotalPaginas(response.data.paginacao?.totalPaginas || 1);
+      setTotalLogs(response.data.paginacao?.total || 0);
+    } catch (error) {
+      console.error('Erro ao carregar logs:', error);
+      showToast('Erro ao carregar logs de auditoria', 'error');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadEstatisticas = async () => {
+    try {
+      const response = await auditoriaAPI.estatisticas('30d');
+      setEstatisticas(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar estatisticas:', error);
+    }
+  };
+
+  const handleFiltroChange = (campo, valor) => {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+    setPagina(1);
+  };
+
+  const limparFiltros = () => {
+    setFiltros({
+      categoria: '',
+      nivel: '',
+      dataInicio: '',
+      dataFim: '',
+      busca: ''
+    });
+    setPagina(1);
+  };
+
+  const handleExportar = async (formato) => {
+    try {
+      setExporting(true);
+      const params = {
+        formato,
+        ...filtros
+      };
+
+      Object.keys(params).forEach(key => {
+        if (!params[key]) delete params[key];
+      });
+
+      const response = await auditoriaAPI.exportar(params);
+
+      if (formato === 'csv') {
+        const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auditoria_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auditoria_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      }
+
+      showToast('Arquivo exportado com sucesso', 'success');
+    } catch (error) {
+      showToast('Erro ao exportar dados', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const openDetailModal = (log) => {
+    setLogSelecionado(log);
+    setIsDetailModalOpen(true);
+  };
+
+  const formatarData = (data) => {
+    return new Date(data).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getNivelBadge = (nivel) => {
+    const nivelConfig = niveis.find(n => n.id === nivel);
+    return nivelConfig?.cor || 'badge-ghost';
+  };
+
+  const renderCamposAlterados = (log) => {
+    if (!log.dadosAnteriores && !log.dadosNovos) return null;
+
+    const campos = log.camposAlterados || [];
+    if (campos.length === 0) return null;
+
+    return (
+      <div className="mt-4">
+        <h4 className="font-semibold text-sm mb-2">Campos Alterados:</h4>
+        <div className="overflow-x-auto">
+          <table className="table table-xs">
+            <thead>
+              <tr>
+                <th>Campo</th>
+                <th>Valor Anterior</th>
+                <th>Valor Novo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {campos.map((campo) => (
+                <tr key={campo}>
+                  <td className="font-medium">{campo}</td>
+                  <td className="text-error/70">
+                    {JSON.stringify(log.dadosAnteriores?.[campo]) || '-'}
+                  </td>
+                  <td className="text-success/70">
+                    {JSON.stringify(log.dadosNovos?.[campo]) || '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) return <Loading text="Carregando logs de auditoria..." />;
+
+  return (
+    <>
+      {/* Estatisticas */}
+      {estatisticas && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="glass-card p-4">
+            <div className="text-2xl font-bold text-primary">{estatisticas.total || 0}</div>
+            <div className="text-sm text-base-content/60">Total de Logs (30 dias)</div>
+          </div>
+          <div className="glass-card p-4">
+            <div className="text-2xl font-bold text-success">{estatisticas.porNivel?.INFO || 0}</div>
+            <div className="text-sm text-base-content/60">Informacoes</div>
+          </div>
+          <div className="glass-card p-4">
+            <div className="text-2xl font-bold text-warning">{estatisticas.porNivel?.WARN || 0}</div>
+            <div className="text-sm text-base-content/60">Avisos</div>
+          </div>
+          <div className="glass-card p-4">
+            <div className="text-2xl font-bold text-error">
+              {(estatisticas.porNivel?.ERROR || 0) + (estatisticas.porNivel?.CRITICAL || 0)}
+            </div>
+            <div className="text-sm text-base-content/60">Erros/Criticos</div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros */}
+      <div className="glass-card p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div>
+            <label className="label label-text text-xs">Buscar</label>
+            <input
+              type="text"
+              placeholder="Usuario, acao..."
+              className="input input-bordered input-sm w-full"
+              value={filtros.busca}
+              onChange={(e) => handleFiltroChange('busca', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label label-text text-xs">Categoria</label>
+            <select
+              className="select select-bordered select-sm w-full"
+              value={filtros.categoria}
+              onChange={(e) => handleFiltroChange('categoria', e.target.value)}
+            >
+              <option value="">Todas</option>
+              {categorias.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label label-text text-xs">Nivel</label>
+            <select
+              className="select select-bordered select-sm w-full"
+              value={filtros.nivel}
+              onChange={(e) => handleFiltroChange('nivel', e.target.value)}
+            >
+              <option value="">Todos</option>
+              {niveis.map((nivel) => (
+                <option key={nivel.id} value={nivel.id}>{nivel.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label label-text text-xs">Data Inicio</label>
+            <input
+              type="date"
+              className="input input-bordered input-sm w-full"
+              value={filtros.dataInicio}
+              onChange={(e) => handleFiltroChange('dataInicio', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label label-text text-xs">Data Fim</label>
+            <input
+              type="date"
+              className="input input-bordered input-sm w-full"
+              value={filtros.dataFim}
+              onChange={(e) => handleFiltroChange('dataFim', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex justify-between items-center mt-3">
+          <button className="btn btn-ghost btn-sm" onClick={limparFiltros}>
+            Limpar Filtros
+          </button>
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn btn-primary btn-sm">
+              {exporting ? (
+                <span className="loading loading-spinner loading-xs"></span>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              )}
+              Exportar
+            </label>
+            <ul tabIndex={0} className="dropdown-content z-10 menu p-2 shadow bg-base-100 rounded-box w-40">
+              <li><button onClick={() => handleExportar('csv')}>CSV</button></li>
+              <li><button onClick={() => handleExportar('json')}>JSON</button></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabela de Logs */}
+      <div className="glass-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table table-sm">
+            <thead className="bg-base-200/30">
+              <tr className="text-base-content/60 uppercase text-xs">
+                <th>Data/Hora</th>
+                <th>Usuario</th>
+                <th>Acao</th>
+                <th>Categoria</th>
+                <th>Nivel</th>
+                <th>Recurso</th>
+                <th className="text-right">Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-8 text-base-content/50">
+                    Nenhum log encontrado
+                  </td>
+                </tr>
+              ) : (
+                logs.map((log) => (
+                  <tr key={log._id} className="hover:bg-base-200/20 transition-colors">
+                    <td className="text-xs whitespace-nowrap">{formatarData(log.createdAt)}</td>
+                    <td className="font-medium">{log.usuarioNome || 'Sistema'}</td>
+                    <td className="text-sm">{log.acao?.replace(/_/g, ' ')}</td>
+                    <td>
+                      <span className="badge badge-ghost badge-sm">{log.categoria}</span>
+                    </td>
+                    <td>
+                      <span className={`badge badge-sm ${getNivelBadge(log.nivel)}`}>
+                        {log.nivel}
+                      </span>
+                    </td>
+                    <td className="text-sm text-base-content/70">{log.recurso}</td>
+                    <td className="text-right">
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        onClick={() => openDetailModal(log)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Paginacao */}
+        <div className="p-4 border-t border-base-200/30 bg-base-200/10 flex justify-between items-center">
+          <p className="text-sm text-base-content/50">
+            {totalLogs} log(s) encontrado(s) - Pagina {pagina} de {totalPaginas}
+          </p>
+          <div className="join">
+            <button
+              className="join-item btn btn-sm"
+              disabled={pagina <= 1 || loadingMore}
+              onClick={() => setPagina(p => p - 1)}
+            >
+              Anterior
+            </button>
+            <button
+              className="join-item btn btn-sm"
+              disabled={pagina >= totalPaginas || loadingMore}
+              onClick={() => setPagina(p => p + 1)}
+            >
+              {loadingMore ? <span className="loading loading-spinner loading-xs"></span> : 'Proxima'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Detalhes */}
+      <Modal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Detalhes do Log"
+        size="lg"
+        actions={
+          <button className="btn btn-ghost" onClick={() => setIsDetailModalOpen(false)}>
+            Fechar
+          </button>
+        }
+      >
+        {logSelecionado && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-base-content/50">Data/Hora</label>
+                <p className="font-medium">{formatarData(logSelecionado.createdAt)}</p>
+              </div>
+              <div>
+                <label className="text-xs text-base-content/50">Usuario</label>
+                <p className="font-medium">{logSelecionado.usuarioNome || 'Sistema'}</p>
+                {logSelecionado.usuarioEmail && (
+                  <p className="text-sm text-base-content/60">{logSelecionado.usuarioEmail}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs text-base-content/50">Acao</label>
+                <p className="font-medium">{logSelecionado.acao?.replace(/_/g, ' ')}</p>
+              </div>
+              <div>
+                <label className="text-xs text-base-content/50">Categoria</label>
+                <span className="badge badge-ghost">{logSelecionado.categoria}</span>
+              </div>
+              <div>
+                <label className="text-xs text-base-content/50">Nivel</label>
+                <span className={`badge ${getNivelBadge(logSelecionado.nivel)}`}>
+                  {logSelecionado.nivel}
+                </span>
+              </div>
+              <div>
+                <label className="text-xs text-base-content/50">Recurso</label>
+                <p className="font-medium">{logSelecionado.recurso}</p>
+                {logSelecionado.recursoId && (
+                  <p className="text-xs text-base-content/50">ID: {logSelecionado.recursoId}</p>
+                )}
+              </div>
+            </div>
+
+            {logSelecionado.descricao && (
+              <div>
+                <label className="text-xs text-base-content/50">Descricao</label>
+                <p className="p-2 bg-base-200/30 rounded">{logSelecionado.descricao}</p>
+              </div>
+            )}
+
+            {logSelecionado.enderecoIp && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-base-content/50">Endereco IP</label>
+                  <p className="font-mono text-sm">{logSelecionado.enderecoIp}</p>
+                </div>
+                {logSelecionado.userAgent && (
+                  <div>
+                    <label className="text-xs text-base-content/50">User Agent</label>
+                    <p className="text-xs text-base-content/60 truncate" title={logSelecionado.userAgent}>
+                      {logSelecionado.userAgent}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!logSelecionado.sucesso && logSelecionado.mensagemErro && (
+              <div className="alert alert-error">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{logSelecionado.mensagemErro}</span>
+              </div>
+            )}
+
+            {renderCamposAlterados(logSelecionado)}
+
+            {logSelecionado.dadosAnteriores && (
+              <div>
+                <label className="text-xs text-base-content/50">Dados Anteriores</label>
+                <pre className="p-2 bg-base-200/30 rounded text-xs overflow-x-auto">
+                  {JSON.stringify(logSelecionado.dadosAnteriores, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {logSelecionado.dadosNovos && (
+              <div>
+                <label className="text-xs text-base-content/50">Dados Novos</label>
+                <pre className="p-2 bg-base-200/30 rounded text-xs overflow-x-auto">
+                  {JSON.stringify(logSelecionado.dadosNovos, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </>
   );
 }

@@ -8,6 +8,11 @@ const routes = require('./routes');
 
 const app = express();
 
+// Trust proxy - necessario para obter IP real atras de proxies/load balancers
+// Valores: true (confiar em qualquer proxy), 1 (confiar apenas no primeiro proxy)
+// Em producao com nginx/cloudflare, use 'loopback' ou numero de proxies
+app.set('trust proxy', process.env.TRUST_PROXY || 'loopback');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
