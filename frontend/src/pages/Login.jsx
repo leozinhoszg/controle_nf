@@ -161,17 +161,9 @@ export default function Login() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-base-content">
-                  Senha
-                </label>
-                <Link
-                  to="/esqueci-senha"
-                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  Recuperar Senha
-                </Link>
-              </div>
+              <label className="block text-sm font-medium text-base-content mb-2">
+                Senha
+              </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -197,6 +189,14 @@ export default function Login() {
                     </svg>
                   )}
                 </button>
+              </div>
+              <div className="text-right mt-2">
+                <Link
+                  to="/esqueci-senha"
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  Recuperar Senha
+                </Link>
               </div>
             </div>
 

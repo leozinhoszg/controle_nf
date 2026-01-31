@@ -5,6 +5,7 @@ import Modal, { FormField } from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Loading from '../components/ui/Loading';
 import EmptyState from '../components/ui/EmptyState';
+import { ProfileBadgeSimple, PermissionBadge } from '../components/ui/ProfileBadge';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/ui/Toast';
 
@@ -292,13 +293,7 @@ function UsuariosTab({ showToast }) {
                     <td className="font-semibold">{usuario.usuario}</td>
                     <td className="text-base-content/70">{usuario.email}</td>
                     <td>
-                      {usuario.perfil ? (
-                        <span className={`badge ${usuario.perfil.isAdmin ? 'badge-primary' : 'badge-secondary'}`}>
-                          {usuario.perfil.nome}
-                        </span>
-                      ) : (
-                        <span className="badge badge-ghost">Sem perfil</span>
-                      )}
+                      <ProfileBadgeSimple perfil={usuario.perfil} size="sm" />
                     </td>
                     <td className="text-center">
                       <button
@@ -560,7 +555,14 @@ function PerfisTab({ showToast }) {
                 <div>
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     {perfil.nome}
-                    {perfil.isAdmin && <span className="badge badge-primary badge-sm">Admin</span>}
+                    {perfil.isAdmin && (
+                      <span className="badge badge-warning badge-sm gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Admin
+                      </span>
+                    )}
                   </h3>
                   {perfil.descricao && <p className="text-sm text-base-content/60 mt-1">{perfil.descricao}</p>}
                 </div>
@@ -571,11 +573,16 @@ function PerfisTab({ showToast }) {
               <div className="mb-4">
                 <p className="text-xs text-base-content/50 uppercase mb-2">Permissoes</p>
                 {perfil.isAdmin ? (
-                  <span className="badge badge-primary badge-outline">Acesso Total</span>
+                  <span className="badge badge-warning badge-outline gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Acesso Total
+                  </span>
                 ) : perfil.permissoes?.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {perfil.permissoes.map((perm) => (
-                      <span key={perm} className="badge badge-ghost badge-sm capitalize">{perm}</span>
+                      <PermissionBadge key={perm} permissao={perm} size="sm" />
                     ))}
                   </div>
                 ) : (
