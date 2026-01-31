@@ -167,11 +167,15 @@ export const meuPerfilAPI = {
   update: (data) => api.put('/auth/me', data),
   updateFoto: (fotoPerfil) => api.put('/auth/me/foto', { fotoPerfil }),
   changePassword: (senhaAtual, novaSenha) => api.put('/auth/me/senha', { senhaAtual, novaSenha }),
+  solicitarVerificacaoEmail: () => api.post('/auth/solicitar-verificacao-email'),
+  verificarEmailOtp: (otp) => api.post('/auth/verificar-email-otp', { otp }),
   // Aliases em português
   obter: () => api.get('/auth/me'),
   atualizar: (data) => api.put('/auth/me', data),
   atualizarFoto: (fotoPerfil) => api.put('/auth/me/foto', { fotoPerfil }),
-  alterarSenha: (senhaAtual, novaSenha) => api.put('/auth/me/senha', { senhaAtual, novaSenha })
+  alterarSenha: (senhaAtual, novaSenha) => api.put('/auth/me/senha', { senhaAtual, novaSenha }),
+  enviarCodigoVerificacao: () => api.post('/auth/solicitar-verificacao-email'),
+  confirmarEmail: (otp) => api.post('/auth/verificar-email-otp', { otp })
 };
 
 // ==================== PERFIS ====================

@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const {
     templateOtpResetSenha,
+    templateOtpVerificacaoEmail,
     templateNovoUsuario,
     templateVerificacaoEmail,
     templateAlertaLogin,
@@ -105,6 +106,24 @@ const emailService = {
             return true;
         } catch (error) {
             console.error('Erro ao enviar OTP de reset:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Envia codigo OTP para verificacao de email
+     * @param {Object} user - Usuario com email e nome
+     * @param {string} codigoOtp - Codigo OTP de 6 digitos
+     */
+    async enviarOtpVerificacaoEmail(user, codigoOtp) {
+        const html = templateOtpVerificacaoEmail(user.usuario, codigoOtp);
+
+        try {
+            await enviarEmail(user.email, 'Codigo de Verificacao de Email', html);
+            console.log(`OTP de verificacao enviado para: ${user.email}`);
+            return true;
+        } catch (error) {
+            console.error('Erro ao enviar OTP de verificacao:', error);
             throw error;
         }
     },

@@ -36,6 +36,13 @@ export default function Perfil() {
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
 
+  // Estado da verificação de email
+  const [showVerificacaoModal, setShowVerificacaoModal] = useState(false);
+  const [codigoOtp, setCodigoOtp] = useState('');
+  const [enviandoOtp, setEnviandoOtp] = useState(false);
+  const [verificandoOtp, setVerificandoOtp] = useState(false);
+  const [otpEnviado, setOtpEnviado] = useState(false);
+
   useEffect(() => {
     loadPerfil();
   }, []);
@@ -206,6 +213,64 @@ export default function Perfil() {
     }
   };
 
+  // Funções de verificação de email
+  const handleSolicitarVerificacao = async () => {
+    try {
+      setEnviandoOtp(true);
+      await meuPerfilAPI.solicitarVerificacaoEmail();
+      setOtpEnviado(true);
+      setShowVerificacaoModal(true);
+      showToast('Código enviado para seu email!', 'success');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Erro ao enviar código', 'error');
+    } finally {
+      setEnviandoOtp(false);
+    }
+  };
+
+  const handleVerificarOtp = async (e) => {
+    e.preventDefault();
+
+    if (!codigoOtp || codigoOtp.length !== 6) {
+      showToast('Digite o código de 6 dígitos', 'error');
+      return;
+    }
+
+    try {
+      setVerificandoOtp(true);
+      await meuPerfilAPI.verificarEmailOtp(codigoOtp);
+
+      // Atualizar estado local e contexto
+      setPerfil(prev => ({ ...prev, emailVerificado: true }));
+      const storage = localStorage.getItem('user') ? localStorage : sessionStorage;
+      const userData = JSON.parse(storage.getItem('user'));
+      const updatedUser = { ...userData, emailVerificado: true };
+      storage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      setShowVerificacaoModal(false);
+      setCodigoOtp('');
+      setOtpEnviado(false);
+      showToast('Email verificado com sucesso!', 'success');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Código inválido ou expirado', 'error');
+    } finally {
+      setVerificandoOtp(false);
+    }
+  };
+
+  const handleReenviarOtp = async () => {
+    try {
+      setEnviandoOtp(true);
+      await meuPerfilAPI.solicitarVerificacaoEmail();
+      showToast('Novo código enviado!', 'success');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Erro ao reenviar código', 'error');
+    } finally {
+      setEnviandoOtp(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('pt-BR', {
@@ -329,18 +394,45 @@ export default function Perfil() {
 
               <div>
                 <p className="text-xs font-medium text-base-content/50 uppercase tracking-wide">Email verificado</p>
-                <p className="font-medium mt-1">
+                <div className="mt-1">
                   {perfil?.emailVerificado ? (
-                    <span className="text-success flex items-center gap-1">
+                    <span className="text-success flex items-center gap-1 font-medium">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
-                      Sim
+                      Verificado
                     </span>
                   ) : (
-                    <span className="text-warning">Não verificado</span>
+                    <div className="space-y-2">
+                      <span className="text-warning flex items-center gap-1 font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Não verificado
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleSolicitarVerificacao}
+                        className="btn btn-sm btn-primary w-full"
+                        disabled={enviandoOtp}
+                      >
+                        {enviandoOtp ? (
+                          <>
+                            <span className="loading loading-spinner loading-xs"></span>
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Verificar email
+                          </>
+                        )}
+                      </button>
+                    </div>
                   )}
-                </p>
+                </div>
               </div>
             </div>
           </div>
@@ -599,6 +691,106 @@ export default function Perfil() {
           outputFormat="image/jpeg"
           quality={0.85}
         />
+      )}
+
+      {/* Modal de Verificação de Email */}
+      {showVerificacaoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="bg-primary/10 px-6 py-4 border-b border-base-300">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Verificar Email</h3>
+                  <p className="text-sm text-base-content/60">Digite o código enviado</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <form onSubmit={handleVerificarOtp} className="p-6">
+              <div className="text-center mb-6">
+                <p className="text-base-content/70">
+                  Enviamos um código de 6 dígitos para:
+                </p>
+                <p className="font-semibold text-primary mt-1">{perfil?.email}</p>
+              </div>
+
+              {/* Input do código OTP */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2 text-center">
+                  Código de verificação
+                </label>
+                <input
+                  type="text"
+                  value={codigoOtp}
+                  onChange={(e) => setCodigoOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="input input-bordered w-full text-center text-2xl tracking-[0.5em] font-mono"
+                  placeholder="000000"
+                  maxLength={6}
+                  autoFocus
+                />
+                <p className="text-xs text-base-content/50 text-center mt-2">
+                  O código expira em 15 minutos
+                </p>
+              </div>
+
+              {/* Botões */}
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  className="btn btn-primary w-full"
+                  disabled={verificandoOtp || codigoOtp.length !== 6}
+                >
+                  {verificandoOtp ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Verificando...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Verificar
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={handleReenviarOtp}
+                    className="btn btn-ghost btn-sm"
+                    disabled={enviandoOtp}
+                  >
+                    {enviandoOtp ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      'Reenviar código'
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowVerificacaoModal(false);
+                      setCodigoOtp('');
+                    }}
+                    className="btn btn-ghost btn-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

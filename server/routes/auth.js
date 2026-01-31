@@ -30,4 +30,8 @@ router.put('/me/foto', autenticar, authController.updateProfilePhoto);
 router.put('/me/senha', autenticar, authController.changePassword);
 router.get('/sessions', autenticar, authController.getSessions);
 
+// Rotas de verificacao de email via OTP (usuario autenticado)
+router.post('/solicitar-verificacao-email', autenticar, authController.solicitarOtpVerificacaoEmail);
+router.post('/verificar-email-otp', autenticar, authController.verificarOtpEmail);
+
 module.exports = router;

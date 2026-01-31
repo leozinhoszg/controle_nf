@@ -93,7 +93,7 @@ exports.create = async (req, res) => {
             senha,
             perfil: perfil || null,
             ativo: ativo !== undefined ? ativo : true,
-            emailVerificado: true // Admin criando usuario, nao precisa verificar
+            emailVerificado: false // Usuario deve verificar email apos primeiro login
         });
 
         await novoUsuario.save();

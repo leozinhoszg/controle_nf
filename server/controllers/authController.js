@@ -553,3 +553,79 @@ exports.getSessions = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Solicitar OTP para verificacao de email (usuario autenticado)
+exports.solicitarOtpVerificacaoEmail = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario nao encontrado' });
+        }
+
+        if (user.emailVerificado) {
+            return res.status(400).json({ message: 'Email ja verificado' });
+        }
+
+        // Gerar codigo OTP
+        const codigoOtp = user.gerarCodigoOtp();
+        await user.save();
+
+        // Enviar email com codigo OTP
+        try {
+            await emailService.enviarOtpVerificacaoEmail(user, codigoOtp);
+        } catch (emailError) {
+            console.error('Erro ao enviar email OTP:', emailError);
+            return res.status(500).json({ message: 'Erro ao enviar email. Tente novamente.' });
+        }
+
+        res.json({
+            message: 'Codigo de verificacao enviado para seu email.',
+            expiresIn: '15 minutos'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Verificar OTP e confirmar email (usuario autenticado)
+exports.verificarOtpEmail = async (req, res) => {
+    try {
+        const { otp } = req.body;
+
+        if (!otp) {
+            return res.status(400).json({ message: 'Codigo OTP e obrigatorio' });
+        }
+
+        // Buscar usuario com campos OTP
+        const user = await User.findById(req.user.id).select('+otpCode +otpExpira');
+
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario nao encontrado' });
+        }
+
+        if (user.emailVerificado) {
+            return res.status(400).json({ message: 'Email ja verificado' });
+        }
+
+        // Verificar OTP
+        const otpValido = user.verificarOtp(otp);
+
+        if (!otpValido) {
+            return res.status(400).json({ message: 'Codigo invalido ou expirado' });
+        }
+
+        // Marcar email como verificado
+        user.emailVerificado = true;
+        user.otpCode = undefined;
+        user.otpExpira = undefined;
+        await user.save();
+
+        res.json({
+            message: 'Email verificado com sucesso!',
+            emailVerificado: true
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

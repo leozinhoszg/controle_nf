@@ -341,6 +341,48 @@ const templateResetSenhaLink = (nomeUsuario, urlReset) => {
 };
 
 /**
+ * Template para codigo OTP de verificacao de email
+ */
+const templateOtpVerificacaoEmail = (nomeUsuario, codigoOtp) => {
+    const content = `
+        <h2 style="margin: 0 0 20px 0; color: #059669; font-size: 22px; font-weight: 600;">
+            Verificacao de Email
+        </h2>
+
+        <p style="margin: 0 0 20px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+            Ola <strong>${nomeUsuario}</strong>,
+        </p>
+
+        <p style="margin: 0 0 25px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+            Para verificar seu email no ${APP_NAME}, utilize o codigo abaixo:
+        </p>
+
+        <!-- Codigo OTP -->
+        <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+            <p style="margin: 0 0 10px 0; color: #065f46; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                Seu codigo de verificacao
+            </p>
+            <div style="font-size: 36px; font-weight: 700; color: #059669; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                ${codigoOtp}
+            </div>
+        </div>
+
+        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+                <strong>Importante:</strong> Este codigo expira em <strong>15 minutos</strong>.
+                Nao compartilhe este codigo com ninguem.
+            </p>
+        </div>
+
+        <p style="margin: 25px 0 0 0; color: #64748b; font-size: 14px; line-height: 1.6;">
+            Apos a verificacao, seu email estara confirmado e voce tera acesso completo ao sistema.
+        </p>
+    `;
+
+    return baseLayout(content);
+};
+
+/**
  * Template para confirmacao de alteracao de senha
  */
 const templateSenhaAlterada = (nomeUsuario) => {
@@ -376,6 +418,7 @@ const templateSenhaAlterada = (nomeUsuario) => {
 
 module.exports = {
     templateOtpResetSenha,
+    templateOtpVerificacaoEmail,
     templateNovoUsuario,
     templateVerificacaoEmail,
     templateAlertaLogin,
