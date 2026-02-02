@@ -58,7 +58,7 @@ export default function ForgotPassword() {
             {/* Logo */}
             <div className="flex items-center justify-center gap-4 mb-8">
               <img src={logo} alt="PROMA" className="h-24" />
-              <span className="text-5xl font-bold tracking-tight drop-shadow-lg">PROMA SIGMA</span>
+              <span className="text-5xl font-bold tracking-tight drop-shadow-lg logo-font">PROMA SIGMA</span>
             </div>
             <p className="text-white/80 text-lg leading-relaxed drop-shadow">
               Não se preocupe, vamos ajudá-lo a recuperar o acesso à sua conta
@@ -103,7 +103,7 @@ export default function ForgotPassword() {
             <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
               <img src={logo} alt="PROMA" className="h-9" />
             </div>
-            <span className="text-2xl font-bold text-primary">PROMA SIGMA</span>
+            <span className="text-2xl font-bold text-primary logo-font">PROMA SIGMA</span>
           </div>
 
           {/* Back Link */}

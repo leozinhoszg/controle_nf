@@ -78,7 +78,7 @@ export default function MainLayout() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
               <img src={logo} alt="PROMA" className="h-10 w-auto" />
-              <span className="text-white font-bold text-xl tracking-wide">PROMA SIGMA</span>
+              <span className="text-white font-bold text-xl tracking-wide logo-font">PROMA SIGMA</span>
             </Link>
 
             {/* Desktop Navigation */}

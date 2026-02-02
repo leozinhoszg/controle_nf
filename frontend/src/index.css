@@ -1,5 +1,24 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://db.onlinewebfonts.com/c/54deb902459692001bafddf102d8235a?family=Stereo+Gothic+W01+850');
 @plugin "daisyui";
+
+/* Custom Font - Stereo Gothic */
+@font-face {
+  font-family: "Stereo Gothic W01 850";
+  src: url("https://db.onlinewebfonts.com/t/54deb902459692001bafddf102d8235a.eot");
+  src: url("https://db.onlinewebfonts.com/t/54deb902459692001bafddf102d8235a.eot?#iefix") format("embedded-opentype"),
+       url("https://db.onlinewebfonts.com/t/54deb902459692001bafddf102d8235a.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/54deb902459692001bafddf102d8235a.woff") format("woff"),
+       url("https://db.onlinewebfonts.com/t/54deb902459692001bafddf102d8235a.ttf") format("truetype"),
+       url("https://db.onlinewebfonts.com/t/54deb902459692001bafddf102d8235a.svg#Stereo Gothic W01 850") format("svg");
+  font-display: swap;
+}
+
+/* Logo font class */
+.logo-font {
+  font-family: "Stereo Gothic W01 850", sans-serif;
+}
 
 /* Tema Light - Azul Moderno (padrão) */
 @plugin "daisyui/theme" {
@@ -38,38 +57,39 @@
 }
 
 /* Tema Dark */
+
 @plugin "daisyui/theme" {
-  name: "dark";
+  name: "dracula";
   default: false;
-  prefersdark: true;
+  prefersdark: false;
   color-scheme: "dark";
-  --color-base-100: oklch(27% 0.041 260.031);
-  --color-base-200: oklch(44% 0.043 257.281);
-  --color-base-300: oklch(55% 0.046 257.417);
-  --color-base-content: oklch(98% 0.003 247.858);
-  --color-primary: oklch(70% 0.165 254.624);
-  --color-primary-content: oklch(96% 0.018 272.314);
-  --color-secondary: oklch(65% 0.241 354.308);
-  --color-secondary-content: oklch(94% 0.028 342.258);
-  --color-accent: oklch(77% 0.152 181.912);
-  --color-accent-content: oklch(38% 0.063 188.416);
-  --color-neutral: oklch(37% 0.044 257.287);
-  --color-neutral-content: oklch(92% 0.004 286.32);
-  --color-info: oklch(74% 0.16 232.661);
-  --color-info-content: oklch(29% 0.066 243.157);
-  --color-success: oklch(76% 0.177 163.223);
-  --color-success-content: oklch(37% 0.077 168.94);
-  --color-warning: oklch(82% 0.189 84.429);
-  --color-warning-content: oklch(41% 0.112 45.904);
-  --color-error: oklch(71% 0.194 13.428);
-  --color-error-content: oklch(27% 0.105 12.094);
-  --radius-selector: 0.5rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.5rem;
+  --color-base-100: oklch(28.822% 0.022 277.508);
+  --color-base-200: oklch(26.805% 0.02 277.508);
+  --color-base-300: oklch(24.787% 0.019 277.508);
+  --color-base-content: oklch(97.747% 0.007 106.545);
+  --color-primary: oklch(75.461% 0.183 346.812);
+  --color-primary-content: oklch(15.092% 0.036 346.812);
+  --color-secondary: oklch(74.202% 0.148 301.883);
+  --color-secondary-content: oklch(14.84% 0.029 301.883);
+  --color-accent: oklch(83.392% 0.124 66.558);
+  --color-accent-content: oklch(16.678% 0.024 66.558);
+  --color-neutral: oklch(39.445% 0.032 275.524);
+  --color-neutral-content: oklch(87.889% 0.006 275.524);
+  --color-info: oklch(88.263% 0.093 212.846);
+  --color-info-content: oklch(17.652% 0.018 212.846);
+  --color-success: oklch(87.099% 0.219 148.024);
+  --color-success-content: oklch(17.419% 0.043 148.024);
+  --color-warning: oklch(95.533% 0.134 112.757);
+  --color-warning-content: oklch(19.106% 0.026 112.757);
+  --color-error: oklch(68.22% 0.206 24.43);
+  --color-error-content: oklch(13.644% 0.041 24.43);
+  --radius-selector: 1rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
-  --depth: 1;
+  --depth: 0;
   --noise: 0;
 }
 
@@ -453,6 +473,322 @@ body {
   }
 }
 
+/* ==================== PÁGINA DE LOGIN ==================== */
+.login-page {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Título PROMA SIGMA no lado esquerdo */
+.login-page > div:first-child span {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* Descrição do sistema */
+.login-page > div:first-child p {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+}
+
+/* Features no lado esquerdo */
+.login-page > div:first-child .flex.items-center span {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Gradiente de fundo moderno para o lado direito (formulário) */
+.login-page > div:last-child {
+  background: linear-gradient(135deg,
+    oklch(98% 0.01 250) 0%,
+    oklch(95% 0.02 245) 25%,
+    oklch(96% 0.015 255) 50%,
+    oklch(94% 0.025 240) 75%,
+    oklch(97% 0.01 260) 100%
+  );
+  position: relative;
+}
+
+/* Overlay com padrão de mesh gradient */
+.login-page > div:last-child::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, oklch(85% 0.12 250 / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, oklch(70% 0.15 240 / 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 50%, oklch(80% 0.1 260 / 0.08) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* Círculos decorativos animados */
+.login-page > div:last-child::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, oklch(65% 0.18 250 / 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float-slow 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Estilo do lado esquerdo (imagem) com overlay gradiente azul */
+.login-page > div:first-child::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    oklch(25% 0.1 250 / 0.7) 0%,
+    oklch(20% 0.15 240 / 0.5) 50%,
+    oklch(30% 0.12 260 / 0.6) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Borda gradiente entre os painéis */
+.login-page > div:last-child {
+  border-left: none !important;
+  box-shadow: -4px 0 30px oklch(55% 0.2 250 / 0.15);
+}
+
+/* Efeito de brilho no canto */
+.login-page .animate-fadeInUp::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, oklch(70% 0.15 250 / 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Input com borda gradiente no focus */
+.login-page input:focus {
+  border-image: linear-gradient(135deg, oklch(55% 0.2 255), oklch(50% 0.18 240)) 1;
+  box-shadow: 0 0 0 3px oklch(55% 0.2 255 / 0.15), 0 4px 12px oklch(50% 0.15 250 / 0.1);
+}
+
+/* Botão de login com gradiente azul marinho */
+.login-page .btn-primary {
+  background: linear-gradient(135deg,
+    oklch(50% 0.18 250) 0%,
+    oklch(40% 0.2 240) 50%,
+    oklch(35% 0.22 235) 100%
+  );
+  border: none;
+  box-shadow: 0 4px 15px oklch(40% 0.2 245 / 0.4), 0 2px 4px oklch(30% 0.15 250 / 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page .btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    oklch(55% 0.16 255 / 0.3) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.login-page .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px oklch(40% 0.2 245 / 0.5), 0 4px 8px oklch(30% 0.15 250 / 0.3);
+}
+
+.login-page .btn-primary:hover::before {
+  opacity: 1;
+}
+
+.login-page .btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Animação de flutuação lenta */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+}
+
+/* Link de recuperar senha com efeito gradiente */
+.login-page a[href="/esqueci-senha"] {
+  background: linear-gradient(135deg, oklch(50% 0.18 250), oklch(45% 0.2 235));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.2s ease;
+}
+
+.login-page a[href="/esqueci-senha"]:hover {
+  background: linear-gradient(135deg, oklch(55% 0.2 255), oklch(50% 0.22 240));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Estilo padrão para títulos da página de login (Montserrat - corporativo) */
+.login-title {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* H1 com gradiente */
+.login-page h1 {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, oklch(25% 0.03 250), oklch(35% 0.08 245));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Labels do formulário de login */
+.login-page label {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Inputs do login */
+.login-page input {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+}
+
+/* Botão de login */
+.login-page .btn-primary {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Texto "Lembrar senha" */
+.login-page .checkbox + span,
+.login-page label span {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Footer da página de login */
+.login-page p:last-child {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Checkbox estilizado com azul marinho */
+.login-page .checkbox-primary:checked {
+  background: linear-gradient(135deg, oklch(50% 0.18 250), oklch(40% 0.2 240));
+  border-color: oklch(45% 0.2 245);
+}
+
+/* Dark Mode - Login Page */
+[data-theme="dark"] .login-page > div:last-child,
+[data-theme="dracula"] .login-page > div:last-child {
+  background: linear-gradient(135deg,
+    oklch(20% 0.03 250) 0%,
+    oklch(22% 0.04 245) 25%,
+    oklch(18% 0.05 255) 50%,
+    oklch(24% 0.04 240) 75%,
+    oklch(20% 0.03 260) 100%
+  );
+}
+
+[data-theme="dark"] .login-page > div:last-child::before,
+[data-theme="dracula"] .login-page > div:last-child::before {
+  background:
+    radial-gradient(ellipse at 20% 0%, oklch(50% 0.15 250 / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, oklch(45% 0.18 240 / 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 50%, oklch(55% 0.12 260 / 0.08) 0%, transparent 40%);
+}
+
+[data-theme="dark"] .login-page > div:last-child::after,
+[data-theme="dracula"] .login-page > div:last-child::after {
+  background: radial-gradient(circle, oklch(50% 0.2 250 / 0.1) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .login-page h1,
+[data-theme="dracula"] .login-page h1 {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, oklch(90% 0.02 250), oklch(80% 0.08 245));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="dark"] .login-page .btn-primary,
+[data-theme="dracula"] .login-page .btn-primary {
+  background: linear-gradient(135deg,
+    oklch(55% 0.2 250) 0%,
+    oklch(45% 0.22 240) 50%,
+    oklch(40% 0.24 235) 100%
+  );
+  box-shadow: 0 4px 15px oklch(50% 0.25 245 / 0.3), 0 2px 4px oklch(40% 0.2 250 / 0.2);
+}
+
+[data-theme="dark"] .login-page .btn-primary:hover,
+[data-theme="dracula"] .login-page .btn-primary:hover {
+  box-shadow: 0 6px 20px oklch(50% 0.25 245 / 0.4), 0 4px 8px oklch(40% 0.2 250 / 0.3);
+}
+
+[data-theme="dark"] .login-page a[href="/esqueci-senha"],
+[data-theme="dracula"] .login-page a[href="/esqueci-senha"] {
+  background: linear-gradient(135deg, oklch(70% 0.15 250), oklch(65% 0.18 240));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="dark"] .login-page a[href="/esqueci-senha"]:hover,
+[data-theme="dracula"] .login-page a[href="/esqueci-senha"]:hover {
+  background: linear-gradient(135deg, oklch(75% 0.18 255), oklch(70% 0.2 245));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ==================== LOGIN DIVIDER ==================== */
+.login-divider {
+  background: linear-gradient(to right,
+    oklch(35% 0.15 245 / 0.35) 0%,
+    oklch(40% 0.12 250 / 0.15) 40%,
+    oklch(50% 0.08 255 / 0.05) 70%,
+    transparent 100%
+  );
+}
+
+[data-theme="dark"] .login-divider,
+[data-theme="dracula"] .login-divider {
+  background: linear-gradient(to right,
+    oklch(8% 0.04 250 / 0.7) 0%,
+    oklch(12% 0.03 250 / 0.3) 40%,
+    oklch(15% 0.02 250 / 0.1) 70%,
+    transparent 100%
+  );
+}
+
 /* ==================== UTILITÁRIOS ==================== */
 .text-gradient {
   background: linear-gradient(135deg, oklch(55% 0.2 255), oklch(60% 0.15 280));
@@ -481,8 +817,1080 @@ body {
 }
 
 /* Theme toggle transition */
-* {
-  transition-property: background-color, border-color, color;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
+html {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition:
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Previne piscadas durante a transição */
+html.theme-transitioning {
+  pointer-events: none;
+}
+
+/* Transição suave para o gradiente de fundo */
+body {
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Elementos glass com transição mais suave */
+.glass,
+.glass-card,
+.glass-sidebar,
+.glass-header,
+.glass-modal,
+.glass-input,
+.stat-card-glass,
+.table-glass {
+  transition:
+    background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== MELHORIAS VISUAIS LOGIN - v2 ==================== */
+/* Para reverter, restaure o arquivo index.backup.css */
+
+/* === ANIMAÇÕES MODERNAS === */
+
+/* Animação de entrada suave com blur */
+@keyframes fadeInBlur {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+/* Animação de slide lateral com fade */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Animação de pulse suave para elementos decorativos */
+@keyframes softPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Animação de shimmer para o botão */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Animação de glow pulsante */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px oklch(55% 0.2 250 / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px oklch(55% 0.2 250 / 0.4);
+  }
+}
+
+/* Animação de shake para erros */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Animação de bounce suave */
+@keyframes softBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Animação de rotação suave para ícones */
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(2deg); }
+}
+
+/* Animação de entrada para os orbs de fundo */
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(20px, -20px) scale(1.1); }
+  50% { transform: translate(40px, 10px) scale(0.95); }
+  75% { transform: translate(10px, 30px) scale(1.05); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-30px, 20px) scale(0.9); }
+  50% { transform: translate(-10px, -30px) scale(1.1); }
+  75% { transform: translate(20px, -10px) scale(0.95); }
+}
+
+/* === CLASSES DE ANIMAÇÃO === */
+
+.animate-fadeInBlur {
+  animation: fadeInBlur 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInFromLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-softBounce {
+  animation: softBounce 2s ease-in-out infinite;
+}
+
+/* === LOGIN PAGE - MELHORIAS === */
+
+/* Formulário com entrada escalonada */
+.login-page .animate-fadeInUp > * {
+  opacity: 0;
+  animation: fadeInBlur 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.login-page .animate-fadeInUp > *:nth-child(1) { animation-delay: 0.1s; }
+.login-page .animate-fadeInUp > *:nth-child(2) { animation-delay: 0.2s; }
+.login-page .animate-fadeInUp > *:nth-child(3) { animation-delay: 0.3s; }
+.login-page .animate-fadeInUp > *:nth-child(4) { animation-delay: 0.4s; }
+.login-page .animate-fadeInUp > *:nth-child(5) { animation-delay: 0.5s; }
+.login-page .animate-fadeInUp > *:nth-child(6) { animation-delay: 0.6s; }
+.login-page .animate-fadeInUp > *:nth-child(7) { animation-delay: 0.7s; }
+.login-page .animate-fadeInUp > *:nth-child(8) { animation-delay: 0.8s; }
+
+/* Features do lado esquerdo com animação escalonada */
+.login-page .space-y-4 > div {
+  opacity: 0;
+  animation: slideInFromLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.login-page .space-y-4 > div:nth-child(1) { animation-delay: 0.3s; }
+.login-page .space-y-4 > div:nth-child(2) { animation-delay: 0.45s; }
+.login-page .space-y-4 > div:nth-child(3) { animation-delay: 0.6s; }
+
+/* Hover nos feature cards */
+.login-page .space-y-4 > div {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-page .space-y-4 > div:hover {
+  transform: translateX(8px);
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.login-page .space-y-4 > div:hover svg {
+  animation: iconFloat 1s ease-in-out infinite;
+}
+
+/* === INPUTS MELHORADOS === */
+
+/* Input com transição suave e glow */
+.login-page input.input {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.login-page input.input:hover {
+  border-color: oklch(55% 0.15 250 / 0.5);
+  box-shadow: 0 0 0 4px oklch(55% 0.2 250 / 0.05);
+}
+
+.login-page input.input:focus {
+  border-color: oklch(55% 0.2 255) !important;
+  box-shadow:
+    0 0 0 4px oklch(55% 0.2 255 / 0.15),
+    0 4px 20px oklch(50% 0.15 250 / 0.15) !important;
+  transform: translateY(-1px);
+}
+
+/* Label com animação de cor */
+.login-page label {
+  transition: color 0.3s ease;
+}
+
+.login-page div:has(input:focus) > label {
+  color: oklch(50% 0.18 250);
+}
+
+/* === BOTÃO DE LOGIN MELHORADO === */
+
+/* Shimmer effect no botão */
+.login-page .btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-page .btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.login-page .btn-primary:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow:
+    0 8px 25px oklch(40% 0.2 245 / 0.5),
+    0 4px 10px oklch(30% 0.15 250 / 0.3);
+}
+
+.login-page .btn-primary:active {
+  transform: translateY(-1px) scale(0.99);
+  transition: all 0.1s ease;
+}
+
+/* Loading state mais elegante */
+.login-page .btn-primary .loading {
+  animation: softPulse 1s ease-in-out infinite;
+}
+
+/* === ALERTAS ANIMADOS === */
+
+/* Alerta de erro com shake */
+.login-page .bg-error\/10 {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both,
+             fadeInBlur 0.3s ease-out;
+}
+
+/* Alerta de sucesso com bounce */
+.login-page .bg-success\/10 {
+  animation: fadeInBlur 0.3s ease-out, softBounce 0.5s ease-out 0.3s;
+}
+
+/* === CHECKBOX MELHORADO === */
+
+.login-page .checkbox {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-page .checkbox:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px oklch(55% 0.2 250 / 0.1);
+}
+
+.login-page .checkbox:checked {
+  animation: softBounce 0.3s ease-out;
+}
+
+/* === LINK RECUPERAR SENHA === */
+
+.login-page a[href="/esqueci-senha"] {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.login-page a[href="/esqueci-senha"]::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, oklch(50% 0.18 250), oklch(45% 0.2 235));
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1px;
+}
+
+.login-page a[href="/esqueci-senha"]:hover::after {
+  width: 100%;
+}
+
+/* === ORBS DECORATIVOS ANIMADOS === */
+
+/* Orb adicional no canto inferior */
+.login-page > div:last-child {
+  position: relative;
+}
+
+/* Primeiro orb - canto superior direito */
+.login-page > div:last-child::after {
+  animation: orbFloat1 25s ease-in-out infinite;
+}
+
+/* Segundo orb decorativo via CSS */
+.login-page > div:last-child .animate-fadeInUp::after {
+  content: '';
+  position: absolute;
+  bottom: -150px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, oklch(60% 0.15 280 / 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: orbFloat2 30s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* === LOGO E TÍTULO ANIMADOS === */
+
+/* Logo no lado esquerdo com pulse suave */
+.login-page > div:first-child img:first-of-type {
+  animation: softPulse 4s ease-in-out infinite;
+}
+
+/* Título PROMA SIGMA com glow */
+.login-page > div:first-child .login-title {
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+  animation: fadeInBlur 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* === BOTÃO TOGGLE THEME MELHORADO === */
+
+.login-page .btn-circle {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-page .btn-circle:hover {
+  transform: rotate(15deg) scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* === ÍCONE DE MOSTRAR/OCULTAR SENHA === */
+
+.login-page button[type="button"]:has(svg) {
+  transition: all 0.2s ease;
+}
+
+.login-page button[type="button"]:has(svg):hover {
+  transform: scale(1.15);
+  color: oklch(50% 0.18 250) !important;
+}
+
+/* === FOOTER ANIMADO === */
+
+.login-page p:last-of-type {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out 1s forwards;
+}
+
+/* === DARK MODE MELHORIAS === */
+
+[data-theme="dark"] .login-page input.input:hover,
+[data-theme="dracula"] .login-page input.input:hover {
+  border-color: oklch(60% 0.18 250 / 0.5);
+  box-shadow: 0 0 0 4px oklch(60% 0.2 250 / 0.08);
+}
+
+[data-theme="dark"] .login-page input.input:focus,
+[data-theme="dracula"] .login-page input.input:focus {
+  border-color: oklch(65% 0.2 255) !important;
+  box-shadow:
+    0 0 0 4px oklch(60% 0.2 255 / 0.2),
+    0 4px 20px oklch(55% 0.18 250 / 0.2) !important;
+}
+
+[data-theme="dark"] .login-page div:has(input:focus) > label,
+[data-theme="dracula"] .login-page div:has(input:focus) > label {
+  color: oklch(70% 0.15 250);
+}
+
+[data-theme="dark"] .login-page a[href="/esqueci-senha"]::after,
+[data-theme="dracula"] .login-page a[href="/esqueci-senha"]::after {
+  background: linear-gradient(90deg, oklch(70% 0.15 250), oklch(65% 0.18 240));
+}
+
+[data-theme="dark"] .login-page .btn-primary:hover,
+[data-theme="dracula"] .login-page .btn-primary:hover {
+  box-shadow:
+    0 8px 25px oklch(50% 0.25 245 / 0.4),
+    0 4px 10px oklch(40% 0.2 250 / 0.3),
+    0 0 40px oklch(55% 0.2 250 / 0.2);
+}
+
+/* === RESPONSIVO === */
+
+@media (max-width: 1024px) {
+  .login-page .space-y-4 > div:hover {
+    transform: none;
+  }
+
+  .login-page > div:last-child .animate-fadeInUp::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================== LOGIN PAGE V2 - NAVY BLUE MODERN ==================== */
+
+/* Navy Blue color palette - Deep & Dark */
+:root {
+  --navy-50: #e6eaf0;
+  --navy-100: #c4cdd9;
+  --navy-200: #9aa8bc;
+  --navy-300: #70839f;
+  --navy-400: #516785;
+  --navy-500: #324b6b;
+  --navy-600: #2a4060;
+  --navy-700: #1e3250;
+  --navy-800: #142440;
+  --navy-900: #0a1628;
+  --navy-950: #050b14;
+}
+
+.login-page-v2 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Brand Panel - Left Side */
+.login-brand-panel {
+  background: linear-gradient(135deg,
+    var(--navy-900) 0%,
+    var(--navy-800) 40%,
+    var(--navy-950) 100%
+  );
+  position: relative;
+}
+
+/* Animated floating orbs */
+.login-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: orbFloat 25s ease-in-out infinite;
+}
+
+.login-orb-1 {
+  width: 450px;
+  height: 450px;
+  background: linear-gradient(135deg, #0c4a6e, #0369a1);
+  top: -120px;
+  right: -120px;
+  animation-delay: 0s;
+}
+
+.login-orb-2 {
+  width: 350px;
+  height: 350px;
+  background: linear-gradient(135deg, #1e3a5f, #2563eb);
+  bottom: 15%;
+  left: -100px;
+  animation-delay: -8s;
+}
+
+.login-orb-3 {
+  width: 250px;
+  height: 250px;
+  background: linear-gradient(135deg, #0e7490, #0891b2);
+  bottom: -80px;
+  right: 15%;
+  animation-delay: -16s;
+}
+
+@keyframes orbFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  75% {
+    transform: translate(20px, 10px) scale(1.05);
+  }
+}
+
+/* Grid pattern */
+.login-grid-pattern {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Logo container animation */
+.login-logo-container {
+  animation: fadeInDown 0.8s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Feature cards */
+.login-feature-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.login-feature-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateX(8px);
+}
+
+.login-feature-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(30, 58, 95, 0.5));
+  border-radius: 12px;
+  color: #7dd3fc;
+  flex-shrink: 0;
+  border: 1px solid rgba(125, 211, 252, 0.15);
+}
+
+/* Feature cards stagger animation */
+.login-brand-panel .space-y-4 > div {
+  opacity: 0;
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+.login-brand-panel .space-y-4 > div:nth-child(1) { animation-delay: 0.3s; }
+.login-brand-panel .space-y-4 > div:nth-child(2) { animation-delay: 0.45s; }
+.login-brand-panel .space-y-4 > div:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Form Panel - Right Side */
+.login-form-panel {
+  background: #ffffff;
+}
+
+.login-form-bg {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(42, 64, 96, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(30, 50, 80, 0.03) 0%, transparent 50%);
+}
+
+/* Form container animation */
+.login-form-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Input styling */
+.login-input {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  color: #1e293b;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  /* padding is controlled by Tailwind classes (pl-12, pr-4, pr-12) */
+}
+
+.login-input::placeholder {
+  color: #94a3b8;
+}
+
+.login-input:hover {
+  border-color: var(--navy-300);
+  background: #f8fafc;
+}
+
+.login-input:focus {
+  border-color: var(--navy-600);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(42, 64, 96, 0.12);
+}
+
+/* Input icons styling */
+.login-input-group .login-input-icon {
+  color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.login-input-group:focus-within .login-input-icon {
+  color: var(--navy-600);
+}
+
+/* Ensure icons are visible in light theme */
+.login-input-group .absolute {
+  color: #64748b;
+}
+
+.login-input-group:focus-within .absolute.left-4 {
+  color: var(--navy-600);
+}
+
+/* Input group animation */
+.login-input-group {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.login-form-container .login-input-group:nth-child(1) { animation-delay: 0.1s; }
+.login-form-container .login-input-group:nth-child(2) { animation-delay: 0.2s; }
+
+/* Checkbox styling */
+.login-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #ffffff;
+  position: relative;
+}
+
+.login-checkbox:hover {
+  border-color: var(--navy-400);
+  background: #f8fafc;
+}
+
+.login-checkbox:focus {
+  border-color: var(--navy-500);
+  box-shadow: 0 0 0 3px rgba(42, 64, 96, 0.1);
+}
+
+.login-checkbox:checked {
+  background: linear-gradient(135deg, var(--navy-600), var(--navy-700));
+  border-color: var(--navy-600);
+}
+
+.login-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Submit button */
+.login-submit-btn {
+  background: linear-gradient(135deg, var(--navy-600) 0%, var(--navy-800) 50%, var(--navy-950) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(5, 11, 20, 0.5);
+}
+
+.login-submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.login-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(5, 11, 20, 0.6);
+}
+
+.login-submit-btn:hover::before {
+  left: 100%;
+}
+
+.login-submit-btn:active {
+  transform: translateY(0);
+}
+
+.login-submit-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(42, 64, 96, 0.25), 0 8px 30px rgba(5, 11, 20, 0.5);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Alert styling - Error */
+.login-alert-error {
+  animation: shake 0.5s ease-out, fadeIn 0.3s ease-out;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+}
+
+.login-alert-error-icon {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  color: #dc2626;
+}
+
+.login-alert-error-text {
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .login-alert-error,
+[data-theme="dracula"] .login-alert-error {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.3) 0%, rgba(153, 27, 27, 0.2) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .login-alert-error-icon,
+[data-theme="dracula"] .login-alert-error-icon {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%);
+  color: #f87171;
+}
+
+[data-theme="dark"] .login-alert-error-text,
+[data-theme="dracula"] .login-alert-error-text {
+  color: #fca5a5;
+}
+
+/* Alert styling - Success */
+.login-alert-success {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* h-13 utility (52px - between h-12 and h-14) */
+.h-13 {
+  height: 3.25rem;
+}
+
+/* Navy color utilities for Tailwind */
+.text-navy-600 {
+  color: var(--navy-600);
+}
+
+.text-navy-700 {
+  color: var(--navy-700);
+}
+
+.text-navy-800 {
+  color: var(--navy-800);
+}
+
+.text-navy-900 {
+  color: var(--navy-900);
+}
+
+.hover\:text-navy-700:hover {
+  color: var(--navy-700);
+}
+
+.hover\:text-navy-900:hover {
+  color: var(--navy-900);
+}
+
+.bg-navy-600 {
+  background-color: var(--navy-600);
+}
+
+.bg-navy-800 {
+  background-color: var(--navy-800);
+}
+
+.from-navy-600 {
+  --tw-gradient-from: var(--navy-600);
+}
+
+.to-navy-800 {
+  --tw-gradient-to: var(--navy-800);
+}
+
+/* Dark mode for login v2 */
+[data-theme="dark"] .login-page-v2,
+[data-theme="dracula"] .login-page-v2 {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .login-form-panel,
+[data-theme="dracula"] .login-form-panel {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+[data-theme="dark"] .login-form-bg,
+[data-theme="dracula"] .login-form-bg {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+}
+
+[data-theme="dark"] .login-input,
+[data-theme="dracula"] .login-input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .login-input::placeholder,
+[data-theme="dracula"] .login-input::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .login-input:hover,
+[data-theme="dracula"] .login-input:hover {
+  border-color: #475569;
+  background: #283548;
+}
+
+[data-theme="dark"] .login-input:focus,
+[data-theme="dracula"] .login-input:focus {
+  border-color: #0284c7;
+  background: #1e293b;
+  box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25);
+}
+
+/* Dark mode input icons */
+[data-theme="dark"] .login-input-group .absolute,
+[data-theme="dracula"] .login-input-group .absolute {
+  color: #64748b;
+}
+
+[data-theme="dark"] .login-input-group:focus-within .absolute.left-4,
+[data-theme="dracula"] .login-input-group:focus-within .absolute.left-4 {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .login-checkbox,
+[data-theme="dracula"] .login-checkbox {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+[data-theme="dark"] .login-checkbox:checked,
+[data-theme="dracula"] .login-checkbox:checked {
+  background: linear-gradient(135deg, #0369a1, #075985);
+  border-color: #0369a1;
+}
+
+[data-theme="dark"] .login-submit-btn,
+[data-theme="dracula"] .login-submit-btn {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 50%, #0c4a6e 100%);
+  box-shadow: 0 4px 20px rgba(3, 105, 161, 0.4);
+}
+
+[data-theme="dark"] .login-submit-btn:hover,
+[data-theme="dracula"] .login-submit-btn:hover {
+  box-shadow: 0 8px 30px rgba(3, 105, 161, 0.5);
+}
+
+/* Login title styling */
+.login-title {
+  color: var(--navy-800);
+}
+
+[data-theme="dark"] .login-title,
+[data-theme="dracula"] .login-title {
+  color: #ffffff;
+}
+
+/* Welcome badge styling */
+.login-welcome-badge {
+  color: var(--navy-700);
+  background: rgba(42, 64, 96, 0.1);
+}
+
+[data-theme="dark"] .login-welcome-badge,
+[data-theme="dracula"] .login-welcome-badge {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* Divider styling */
+.login-divider-text {
+  background: #ffffff;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .login-divider-text,
+[data-theme="dracula"] .login-divider-text {
+  background: #1e293b;
+  color: #64748b;
+}
+
+/* Theme toggle on login page */
+.login-page-v2 .login-theme-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--navy-700);
+}
+
+.login-page-v2 .login-theme-toggle:hover {
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .login-page-v2 .login-theme-toggle,
+[data-theme="dracula"] .login-page-v2 .login-theme-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .login-page-v2 .login-theme-toggle:hover,
+[data-theme="dracula"] .login-page-v2 .login-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Forgot password link styling */
+.login-forgot-link {
+  color: var(--navy-700);
+}
+
+.login-forgot-link:hover {
+  color: var(--navy-900);
+}
+
+[data-theme="dark"] .login-forgot-link,
+[data-theme="dracula"] .login-forgot-link {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .login-forgot-link:hover,
+[data-theme="dracula"] .login-forgot-link:hover {
+  color: #7dd3fc;
+}
+
+/* Responsive adjustments for login v2 */
+@media (max-width: 1024px) {
+  .login-page-v2 {
+    background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+  }
+
+  .login-form-panel {
+    background: #ffffff;
+    border-radius: 2rem 2rem 0 0;
+    margin-top: -2rem;
+  }
+
+  [data-theme="dark"] .login-form-panel,
+  [data-theme="dracula"] .login-form-panel {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-orb,
+  .login-feature-card,
+  .login-logo-container,
+  .login-form-container,
+  .login-input-group {
+    animation: none !important;
+  }
+
+  .login-orb {
+    opacity: 0.3;
+  }
 }

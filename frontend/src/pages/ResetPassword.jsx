@@ -88,7 +88,7 @@ export default function ResetPassword() {
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center gap-4 mb-8">
                 <img src={logo} alt="PROMA" className="h-24" />
-                <span className="text-5xl font-bold tracking-tight drop-shadow-lg">PROMA SIGMA</span>
+                <span className="text-5xl font-bold tracking-tight drop-shadow-lg logo-font">PROMA SIGMA</span>
               </div>
               <p className="text-white/80 text-lg leading-relaxed drop-shadow">
                 Sistema de gestão e monitoramento de contratos com fornecedores
@@ -105,7 +105,7 @@ export default function ResetPassword() {
               <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
                 <img src={logo} alt="PROMA" className="h-9" />
               </div>
-              <span className="text-2xl font-bold text-primary">PROMA SIGMA</span>
+              <span className="text-2xl font-bold text-primary logo-font">PROMA SIGMA</span>
             </div>
 
             {/* Error Icon */}
@@ -160,7 +160,7 @@ export default function ResetPassword() {
             <div className="max-w-md text-center">
               <div className="flex items-center justify-center gap-4 mb-8">
                 <img src={logo} alt="PROMA" className="h-24" />
-                <span className="text-5xl font-bold tracking-tight drop-shadow-lg">PROMA SIGMA</span>
+                <span className="text-5xl font-bold tracking-tight drop-shadow-lg logo-font">PROMA SIGMA</span>
               </div>
               <p className="text-white/80 text-lg leading-relaxed drop-shadow">
                 Sistema de gestão e monitoramento de contratos com fornecedores
@@ -177,7 +177,7 @@ export default function ResetPassword() {
               <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
                 <img src={logo} alt="PROMA" className="h-9" />
               </div>
-              <span className="text-2xl font-bold text-primary">PROMA SIGMA</span>
+              <span className="text-2xl font-bold text-primary logo-font">PROMA SIGMA</span>
             </div>
 
             {/* Success Icon */}
@@ -225,7 +225,7 @@ export default function ResetPassword() {
             {/* Logo */}
             <div className="flex items-center justify-center gap-4 mb-8">
               <img src={logo} alt="PROMA" className="h-24" />
-              <span className="text-5xl font-bold tracking-tight drop-shadow-lg">PROMA SIGMA</span>
+              <span className="text-5xl font-bold tracking-tight drop-shadow-lg logo-font">PROMA SIGMA</span>
             </div>
             <p className="text-white/80 text-lg leading-relaxed drop-shadow">
               Crie uma nova senha segura para proteger sua conta
@@ -270,7 +270,7 @@ export default function ResetPassword() {
             <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
               <img src={logo} alt="PROMA" className="h-9" />
             </div>
-            <span className="text-2xl font-bold text-primary">PROMA SIGMA</span>
+            <span className="text-2xl font-bold text-primary logo-font">PROMA SIGMA</span>
           </div>
 
           {/* Back Link */}
