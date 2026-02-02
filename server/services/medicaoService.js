@@ -86,6 +86,22 @@ function extrairMesReferencia(data) {
 }
 
 /**
+ * Determina o mês de referência da medição
+ * Usa dat-prev-medicao (data de emissão da nota) se disponível,
+ * caso contrário usa dat-medicao (data TI)
+ * @param {Object} medicaoERP - Objeto da medição vinda do ERP
+ */
+function determinarMesReferencia(medicaoERP) {
+    // dat-prev-medicao é a data de emissão da nota pelo fornecedor
+    // Esta é a data que define o mês de referência da medição
+    if (medicaoERP['dat-prev-medicao']) {
+        return extrairMesReferencia(medicaoERP['dat-prev-medicao']);
+    }
+    // Fallback para dat-medicao (data TI) se dat-prev-medicao não disponível
+    return extrairMesReferencia(medicaoERP['dat-medicao']);
+}
+
+/**
  * Sincroniza medições da API do ERP para o banco local
  * @param {Object} sequencia - Documento da sequência com contrato populado
  */
@@ -104,7 +120,7 @@ async function sincronizarMedicoes(sequencia) {
     const medicoesProcessadas = [];
 
     for (const med of medicoesERP) {
-        const mesReferencia = extrairMesReferencia(med['dat-medicao']);
+        const mesReferencia = determinarMesReferencia(med);
 
         // Determinar status de registro
         // sld-val-medicao = 0 significa que a nota foi registrada
@@ -201,9 +217,18 @@ async function calcularStatusMensal(sequencia, mesKey) {
 
     // Se não há medições
     if (medicoes.length === 0) {
-        // Mês futuro
-        if (dataLimite > hoje) {
+        // Verificar se estamos no mês atual
+        const mesAtual = hoje.getMonth() + 1;
+        const anoAtual = hoje.getFullYear();
+        const ehMesAtual = (ano === anoAtual && mes === mesAtual);
+
+        // Mês futuro (não é o mês atual e data limite ainda não chegou)
+        if (!ehMesAtual && dataLimite > hoje) {
             return 'futuro';
+        }
+        // Mês atual mas ainda não chegou o dia de emissão - mostrar pendente
+        if (ehMesAtual && dataLimite > hoje) {
+            return 'pendente';
         }
         // Passou da data e não tem medição
         if (hoje > dataLimite) {
@@ -294,5 +319,6 @@ module.exports = {
     calcularStatusMensal,
     atualizarStatusMensal,
     sincronizarTodas,
-    extrairMesReferencia
+    extrairMesReferencia,
+    determinarMesReferencia
 };
