@@ -1003,8 +1003,42 @@ body {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* ==================== CAMPOS DE FORMULÁRIO - DARK MODE ==================== */
+/* ==================== CAMPOS DE FORMULÁRIO (mesmo estilo do login) ==================== */
 
+/* Light mode */
+.input,
+.select,
+.textarea {
+  background-color: #ffffff !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  color: #1e293b;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #94a3b8;
+}
+
+.input:hover,
+.select:hover,
+.textarea:hover {
+  border-color: var(--navy-300) !important;
+  background-color: #f8fafc !important;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--navy-600) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(42, 64, 96, 0.12);
+  outline: none;
+}
+
+/* Dark mode */
 [data-theme="dark"] .input,
 [data-theme="dracula"] .input,
 [data-theme="dark"] .select,
@@ -1041,7 +1075,7 @@ body {
 [data-theme="dracula"] .textarea:focus {
   border-color: #0284c7 !important;
   background-color: #1e293b !important;
-  box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.2);
+  box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25);
   outline: none;
 }
 
