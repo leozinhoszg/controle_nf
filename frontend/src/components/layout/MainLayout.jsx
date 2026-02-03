@@ -61,7 +61,16 @@ export default function MainLayout() {
     <div className="min-h-screen app-bg">
       {/* Navbar */}
       <nav className="navbar-header">
-        <div className="px-4 lg:px-8">
+        {/* Decorative background (clipped) */}
+        <div className="navbar-bg-effects">
+          <div className="navbar-orb navbar-orb-1"></div>
+          <div className="navbar-orb navbar-orb-2"></div>
+          <div className="navbar-orb navbar-orb-3"></div>
+          <div className="navbar-grid"></div>
+          <div className="navbar-glow"></div>
+        </div>
+
+        <div className="relative z-10 px-4 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
@@ -135,22 +144,22 @@ export default function MainLayout() {
                 {userMenuOpen && (
                   <>
                     <div
-                      className="fixed inset-0 z-10"
+                      className="fixed inset-0 z-40"
                       onClick={() => setUserMenuOpen(false)}
                     ></div>
-                    <div className="absolute right-0 mt-2 w-48 bg-base-100 rounded-xl shadow-lg border border-base-300 py-2 z-20 animate-fadeIn origin-top-right">
-                      <div className="px-4 py-2 border-b border-base-200">
-                        <p className="text-sm font-medium text-base-content truncate">
+                    <div className="absolute right-0 mt-3 w-52 user-dropdown rounded-xl shadow-xl py-2 z-50 animate-fadeIn origin-top-right">
+                      <div className="px-4 py-2.5 border-b dropdown-divider">
+                        <p className="text-sm font-medium dropdown-text truncate">
                           {usuario?.usuario || "Usuário"}
                         </p>
-                        <p className="text-xs text-base-content/60 truncate">
+                        <p className="text-xs dropdown-text-muted truncate">
                           {usuario?.email || "Sem email"}
                         </p>
                       </div>
                       <Link
                         to="/perfil"
                         onClick={() => setUserMenuOpen(false)}
-                        className="w-full px-4 py-2 text-left text-sm text-base-content hover:bg-base-200 transition-colors flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm dropdown-item transition-colors flex items-center gap-2"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -172,7 +181,7 @@ export default function MainLayout() {
                         <Link
                           to="/configuracoes"
                           onClick={() => setUserMenuOpen(false)}
-                          className="w-full px-4 py-2 text-left text-sm text-base-content hover:bg-base-200 transition-colors flex items-center gap-2"
+                          className="w-full px-4 py-2 text-left text-sm dropdown-item transition-colors flex items-center gap-2"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -199,7 +208,7 @@ export default function MainLayout() {
                       )}
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-error hover:bg-error/10 transition-colors flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm dropdown-item-danger transition-colors flex items-center gap-2"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -279,7 +288,7 @@ export default function MainLayout() {
       </nav>
 
       {/* Main Content */}
-      <main className="p-4 lg:p-6">
+      <main className="pt-6 pb-4 px-4 lg:pt-8 lg:pb-6 lg:px-6">
         <div className="max-w-7xl mx-auto animate-fadeIn">
           <Outlet />
         </div>
