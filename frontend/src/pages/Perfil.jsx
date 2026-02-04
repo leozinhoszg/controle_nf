@@ -291,7 +291,7 @@ export default function Perfil() {
       {/* Cabeçalho */}
       <div>
         <h1 className="text-2xl font-bold text-gradient">Meu Perfil</h1>
-        <p className="text-base-content/60">Gerencie suas informações pessoais</p>
+        <p className="text-base-content/50 text-sm mt-1">Gerencie suas informações pessoais</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -476,7 +476,7 @@ export default function Perfil() {
               <div className="flex justify-end pt-4">
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary shadow-soft"
                   disabled={saving}
                 >
                   {saving ? (

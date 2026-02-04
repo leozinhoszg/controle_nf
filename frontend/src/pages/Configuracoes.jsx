@@ -46,7 +46,7 @@ export default function Configuracoes() {
       {/* Cabecalho */}
       <div>
         <h1 className="text-2xl font-bold text-gradient">Configuracoes</h1>
-        <p className="text-base-content/60">Gerencie usuarios e perfis do sistema</p>
+        <p className="text-base-content/50 text-sm mt-1">Gerencie usuarios e perfis do sistema</p>
       </div>
 
       {/* Tabs */}

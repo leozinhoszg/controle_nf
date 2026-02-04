@@ -64,7 +64,7 @@
 /* Tema Dark */
 
 @plugin "daisyui/theme" {
-  name: "dracula";
+  name: "dark";
   default: false;
   prefersdark: false;
   color-scheme: "dark";
@@ -263,14 +263,12 @@ body {
   box-shadow: 0 0 0 3px rgba(var(--p), 0.15) !important;
 }
 
-[data-theme="dark"] .glass-input,
-[data-theme="dracula"] .glass-input {
+[data-theme="dark"] .glass-input{
   background: #1e293b !important;
   border-color: #334155 !important;
 }
 
-[data-theme="dark"] .glass-input:focus,
-[data-theme="dracula"] .glass-input:focus {
+[data-theme="dark"] .glass-input:focus{
   background: #1e293b !important;
   border-color: #0284c7 !important;
   box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.2) !important;
@@ -817,13 +815,11 @@ body {
 }
 
 /* Dark Mode - Login Page */
-[data-theme="dark"] .login-page > div:last-child,
-[data-theme="dracula"] .login-page > div:last-child {
+[data-theme="dark"] .login-page > div:last-child{
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
-[data-theme="dark"] .login-page > div:last-child::before,
-[data-theme="dracula"] .login-page > div:last-child::before {
+[data-theme="dark"] .login-page > div:last-child::before{
   background: radial-gradient(
       ellipse at 20% 0%,
       rgba(6, 182, 212, 0.1) 0%,
@@ -841,8 +837,7 @@ body {
     );
 }
 
-[data-theme="dark"] .login-page > div:last-child::after,
-[data-theme="dracula"] .login-page > div:last-child::after {
+[data-theme="dark"] .login-page > div:last-child::after{
   background: radial-gradient(
     circle,
     rgba(56, 189, 248, 0.08) 0%,
@@ -850,8 +845,7 @@ body {
   );
 }
 
-[data-theme="dark"] .login-page h1,
-[data-theme="dracula"] .login-page h1 {
+[data-theme="dark"] .login-page h1{
   font-family: "Montserrat", -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -862,19 +856,16 @@ body {
   background-clip: unset;
 }
 
-[data-theme="dark"] .login-page .btn-primary,
-[data-theme="dracula"] .login-page .btn-primary {
+[data-theme="dark"] .login-page .btn-primary{
   background: linear-gradient(135deg, #0369a1 0%, #075985 50%, #0c4a6e 100%) !important;
   box-shadow: 0 4px 15px rgba(3, 105, 161, 0.35);
 }
 
-[data-theme="dark"] .login-page .btn-primary:hover,
-[data-theme="dracula"] .login-page .btn-primary:hover {
+[data-theme="dark"] .login-page .btn-primary:hover{
   box-shadow: 0 6px 25px rgba(3, 105, 161, 0.5);
 }
 
-[data-theme="dark"] .login-page a[href="/esqueci-senha"],
-[data-theme="dracula"] .login-page a[href="/esqueci-senha"] {
+[data-theme="dark"] .login-page a[href="/esqueci-senha"]{
   color: #38bdf8;
   background: none;
   -webkit-background-clip: unset;
@@ -882,8 +873,7 @@ body {
   background-clip: unset;
 }
 
-[data-theme="dark"] .login-page a[href="/esqueci-senha"]:hover,
-[data-theme="dracula"] .login-page a[href="/esqueci-senha"]:hover {
+[data-theme="dark"] .login-page a[href="/esqueci-senha"]:hover{
   color: #7dd3fc;
   background: none;
   -webkit-background-clip: unset;
@@ -902,8 +892,7 @@ body {
   );
 }
 
-[data-theme="dark"] .login-divider,
-[data-theme="dracula"] .login-divider {
+[data-theme="dark"] .login-divider{
   background: linear-gradient(
     to right,
     rgba(15, 23, 42, 0.7) 0%,
@@ -929,8 +918,7 @@ body {
 }
 
 /* Dark mode: navbar mais clara para contrastar com o fundo */
-[data-theme="dark"] .navbar-header,
-[data-theme="dracula"] .navbar-header {
+[data-theme="dark"] .navbar-header{
   background: linear-gradient(
     135deg,
     #1e293b 0%,
@@ -1077,46 +1065,38 @@ body {
 }
 
 /* Dark theme */
-[data-theme="dark"] .user-dropdown,
-[data-theme="dracula"] .user-dropdown {
+[data-theme="dark"] .user-dropdown{
   background: #1e293b;
   border: 1px solid rgba(56, 189, 248, 0.12);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 189, 248, 0.06);
 }
 
-[data-theme="dark"] .dropdown-divider,
-[data-theme="dracula"] .dropdown-divider {
+[data-theme="dark"] .dropdown-divider{
   border-color: rgba(56, 189, 248, 0.1);
 }
 
-[data-theme="dark"] .dropdown-text,
-[data-theme="dracula"] .dropdown-text {
+[data-theme="dark"] .dropdown-text{
   color: #f1f5f9;
 }
 
-[data-theme="dark"] .dropdown-text-muted,
-[data-theme="dracula"] .dropdown-text-muted {
+[data-theme="dark"] .dropdown-text-muted{
   color: #64748b;
 }
 
-[data-theme="dark"] .dropdown-item,
-[data-theme="dracula"] .dropdown-item {
+[data-theme="dark"] .dropdown-item{
   color: #cbd5e1;
 }
 
-[data-theme="dark"] .dropdown-item:hover,
-[data-theme="dracula"] .dropdown-item:hover {
+[data-theme="dark"] .dropdown-item:hover{
   background: rgba(56, 189, 248, 0.08);
   color: #f1f5f9;
 }
 
-[data-theme="dark"] .dropdown-item-danger,
-[data-theme="dracula"] .dropdown-item-danger {
+[data-theme="dark"] .dropdown-item-danger{
   color: #f87171;
 }
 
-[data-theme="dark"] .dropdown-item-danger:hover,
-[data-theme="dracula"] .dropdown-item-danger:hover {
+[data-theme="dark"] .dropdown-item-danger:hover{
   background: rgba(248, 113, 113, 0.1);
 }
 
@@ -1127,8 +1107,7 @@ body {
 }
 
 /* Dark: mesma paleta do login-form-panel */
-[data-theme="dark"] .app-bg,
-[data-theme="dracula"] .app-bg {
+[data-theme="dark"] .app-bg{
   background:
     radial-gradient(
       ellipse at 0% 0%,
@@ -1158,8 +1137,7 @@ body {
   background-clip: unset;
 }
 
-[data-theme="dark"] .text-gradient,
-[data-theme="dracula"] .text-gradient {
+[data-theme="dark"] .text-gradient{
   color: #38bdf8;
   background: none;
   -webkit-background-clip: unset;
@@ -1216,39 +1194,28 @@ body {
 
 /* Dark mode */
 [data-theme="dark"] .input,
-[data-theme="dracula"] .input,
 [data-theme="dark"] .select,
-[data-theme="dracula"] .select,
-[data-theme="dark"] .textarea,
-[data-theme="dracula"] .textarea {
+[data-theme="dark"] .textarea{
   background-color: #1e293b !important;
   border-color: #334155 !important;
   color: #f1f5f9;
 }
 
 [data-theme="dark"] .input::placeholder,
-[data-theme="dracula"] .input::placeholder,
-[data-theme="dark"] .textarea::placeholder,
-[data-theme="dracula"] .textarea::placeholder {
+[data-theme="dark"] .textarea::placeholder{
   color: #64748b;
 }
 
 [data-theme="dark"] .input:hover,
-[data-theme="dracula"] .input:hover,
 [data-theme="dark"] .select:hover,
-[data-theme="dracula"] .select:hover,
-[data-theme="dark"] .textarea:hover,
-[data-theme="dracula"] .textarea:hover {
+[data-theme="dark"] .textarea:hover{
   border-color: #475569 !important;
   background-color: #283548 !important;
 }
 
 [data-theme="dark"] .input:focus,
-[data-theme="dracula"] .input:focus,
 [data-theme="dark"] .select:focus,
-[data-theme="dracula"] .select:focus,
-[data-theme="dark"] .textarea:focus,
-[data-theme="dracula"] .textarea:focus {
+[data-theme="dark"] .textarea:focus{
   border-color: #0284c7 !important;
   background-color: #1e293b !important;
   box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25);
@@ -1296,27 +1263,23 @@ body {
 }
 
 /* Dark theme - botões primários com tom azul mais vibrante */
-[data-theme="dark"] .btn-primary,
-[data-theme="dracula"] .btn-primary {
+[data-theme="dark"] .btn-primary{
   background: linear-gradient(135deg, #0369a1 0%, #075985 50%, #0c4a6e 100%) !important;
   box-shadow: 0 4px 15px rgba(3, 105, 161, 0.35);
 }
 
-[data-theme="dark"] .btn-primary:hover,
-[data-theme="dracula"] .btn-primary:hover {
+[data-theme="dark"] .btn-primary:hover{
   box-shadow: 0 6px 25px rgba(3, 105, 161, 0.5);
 }
 
-[data-theme="dark"] .btn-primary.btn-outline,
-[data-theme="dracula"] .btn-primary.btn-outline {
+[data-theme="dark"] .btn-primary.btn-outline{
   background: transparent !important;
   border: 1px solid #0284c7 !important;
   color: #38bdf8 !important;
   box-shadow: none;
 }
 
-[data-theme="dark"] .btn-primary.btn-outline:hover,
-[data-theme="dracula"] .btn-primary.btn-outline:hover {
+[data-theme="dark"] .btn-primary.btn-outline:hover{
   background: linear-gradient(135deg, #0369a1 0%, #075985 50%, #0c4a6e 100%) !important;
   color: white !important;
   box-shadow: 0 4px 15px rgba(3, 105, 161, 0.35);
@@ -1522,6 +1485,65 @@ body {
 
 .animate-softBounce {
   animation: softBounce 2s ease-in-out infinite;
+}
+
+/* === DASHBOARD ENHANCEMENTS === */
+
+/* Icon float on hover via group */
+.group:hover .icon-hover-float {
+  animation: iconFloat 1.5s ease-in-out infinite;
+}
+
+.icon-hover-float {
+  transition: transform 0.3s ease;
+}
+
+/* Refresh spin */
+@keyframes spinSmooth {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-smooth {
+  animation: spinSmooth 1s linear infinite;
+}
+
+/* Smooth grow for progress bars */
+.grow-bar {
+  animation: growWidth 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes growWidth {
+  from {
+    max-width: 0;
+  }
+  to {
+    max-width: 100%;
+  }
+}
+
+/* Counter pulse on load */
+.counter-loaded {
+  animation: softPulse 0.3s ease-out;
+}
+
+/* Reduced motion - dashboard global */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-animate > *,
+  .animate-fadeInUp,
+  .animate-fadeIn,
+  .animate-fadeInBlur,
+  .grow-bar,
+  .counter-loaded {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .icon-hover-float,
+  .animate-spin-smooth {
+    animation: none !important;
+  }
 }
 
 /* === LOGIN PAGE - MELHORIAS === */
@@ -1785,31 +1807,26 @@ body {
 
 /* === DARK MODE MELHORIAS === */
 
-[data-theme="dark"] .login-page input.input:hover,
-[data-theme="dracula"] .login-page input.input:hover {
+[data-theme="dark"] .login-page input.input:hover{
   border-color: #475569;
   box-shadow: 0 0 0 4px rgba(71, 85, 105, 0.15);
 }
 
-[data-theme="dark"] .login-page input.input:focus,
-[data-theme="dracula"] .login-page input.input:focus {
+[data-theme="dark"] .login-page input.input:focus{
   border-color: #0284c7 !important;
   box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25),
     0 4px 20px rgba(3, 105, 161, 0.15) !important;
 }
 
-[data-theme="dark"] .login-page div:has(input:focus) > label,
-[data-theme="dracula"] .login-page div:has(input:focus) > label {
+[data-theme="dark"] .login-page div:has(input:focus) > label{
   color: #38bdf8;
 }
 
-[data-theme="dark"] .login-page a[href="/esqueci-senha"]::after,
-[data-theme="dracula"] .login-page a[href="/esqueci-senha"]::after {
+[data-theme="dark"] .login-page a[href="/esqueci-senha"]::after{
   background: linear-gradient(90deg, #38bdf8, #0284c7);
 }
 
-[data-theme="dark"] .login-page .btn-primary:hover,
-[data-theme="dracula"] .login-page .btn-primary:hover {
+[data-theme="dark"] .login-page .btn-primary:hover{
   box-shadow: 0 8px 25px rgba(3, 105, 161, 0.4),
     0 4px 10px rgba(7, 89, 133, 0.3), 0 0 40px rgba(3, 105, 161, 0.2);
 }
@@ -2248,8 +2265,7 @@ body {
   color: #b91c1c;
 }
 
-[data-theme="dark"] .login-alert-error,
-[data-theme="dracula"] .login-alert-error {
+[data-theme="dark"] .login-alert-error{
   background: linear-gradient(
     135deg,
     rgba(127, 29, 29, 0.3) 0%,
@@ -2258,8 +2274,7 @@ body {
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-[data-theme="dark"] .login-alert-error-icon,
-[data-theme="dracula"] .login-alert-error-icon {
+[data-theme="dark"] .login-alert-error-icon{
   background: linear-gradient(
     135deg,
     rgba(239, 68, 68, 0.3) 0%,
@@ -2268,8 +2283,7 @@ body {
   color: #f87171;
 }
 
-[data-theme="dark"] .login-alert-error-text,
-[data-theme="dracula"] .login-alert-error-text {
+[data-theme="dark"] .login-alert-error-text{
   color: #fca5a5;
 }
 
@@ -2325,18 +2339,15 @@ body {
 }
 
 /* Dark mode for login v2 */
-[data-theme="dark"] .login-page-v2,
-[data-theme="dracula"] .login-page-v2 {
+[data-theme="dark"] .login-page-v2{
   background: #0f172a;
 }
 
-[data-theme="dark"] .login-form-panel,
-[data-theme="dracula"] .login-form-panel {
+[data-theme="dark"] .login-form-panel{
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
-[data-theme="dark"] .login-form-bg,
-[data-theme="dracula"] .login-form-bg {
+[data-theme="dark"] .login-form-bg{
   background: radial-gradient(
       ellipse at 0% 0%,
       rgba(6, 182, 212, 0.08) 0%,
@@ -2349,62 +2360,52 @@ body {
     );
 }
 
-[data-theme="dark"] .login-input,
-[data-theme="dracula"] .login-input {
+[data-theme="dark"] .login-input{
   background: #1e293b;
   border-color: #334155;
   color: #f1f5f9;
 }
 
-[data-theme="dark"] .login-input::placeholder,
-[data-theme="dracula"] .login-input::placeholder {
+[data-theme="dark"] .login-input::placeholder{
   color: #64748b;
 }
 
-[data-theme="dark"] .login-input:hover,
-[data-theme="dracula"] .login-input:hover {
+[data-theme="dark"] .login-input:hover{
   border-color: #475569;
   background: #283548;
 }
 
-[data-theme="dark"] .login-input:focus,
-[data-theme="dracula"] .login-input:focus {
+[data-theme="dark"] .login-input:focus{
   border-color: #0284c7;
   background: #1e293b;
   box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.25);
 }
 
 /* Dark mode input icons */
-[data-theme="dark"] .login-input-group .absolute,
-[data-theme="dracula"] .login-input-group .absolute {
+[data-theme="dark"] .login-input-group .absolute{
   color: #64748b;
 }
 
-[data-theme="dark"] .login-input-group:focus-within .absolute.left-4,
-[data-theme="dracula"] .login-input-group:focus-within .absolute.left-4 {
+[data-theme="dark"] .login-input-group:focus-within .absolute.left-4{
   color: #38bdf8;
 }
 
-[data-theme="dark"] .login-checkbox,
-[data-theme="dracula"] .login-checkbox {
+[data-theme="dark"] .login-checkbox{
   background: #1e293b;
   border-color: #475569;
 }
 
-[data-theme="dark"] .login-checkbox:checked,
-[data-theme="dracula"] .login-checkbox:checked {
+[data-theme="dark"] .login-checkbox:checked{
   background: linear-gradient(135deg, #0369a1, #075985);
   border-color: #0369a1;
 }
 
-[data-theme="dark"] .login-submit-btn,
-[data-theme="dracula"] .login-submit-btn {
+[data-theme="dark"] .login-submit-btn{
   background: linear-gradient(135deg, #0369a1 0%, #075985 50%, #0c4a6e 100%);
   box-shadow: 0 4px 20px rgba(3, 105, 161, 0.4);
 }
 
-[data-theme="dark"] .login-submit-btn:hover,
-[data-theme="dracula"] .login-submit-btn:hover {
+[data-theme="dark"] .login-submit-btn:hover{
   box-shadow: 0 8px 30px rgba(3, 105, 161, 0.5);
 }
 
@@ -2413,8 +2414,7 @@ body {
   color: var(--navy-800);
 }
 
-[data-theme="dark"] .login-title,
-[data-theme="dracula"] .login-title {
+[data-theme="dark"] .login-title{
   color: #ffffff;
 }
 
@@ -2424,8 +2424,7 @@ body {
   background: rgba(42, 64, 96, 0.1);
 }
 
-[data-theme="dark"] .login-welcome-badge,
-[data-theme="dracula"] .login-welcome-badge {
+[data-theme="dark"] .login-welcome-badge{
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.15);
 }
@@ -2436,8 +2435,7 @@ body {
   color: #94a3b8;
 }
 
-[data-theme="dark"] .login-divider-text,
-[data-theme="dracula"] .login-divider-text {
+[data-theme="dark"] .login-divider-text{
   background: #1e293b;
   color: #64748b;
 }
@@ -2455,15 +2453,13 @@ body {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-[data-theme="dark"] .login-page-v2 .login-theme-toggle,
-[data-theme="dracula"] .login-page-v2 .login-theme-toggle {
+[data-theme="dark"] .login-page-v2 .login-theme-toggle{
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: #f1f5f9;
 }
 
-[data-theme="dark"] .login-page-v2 .login-theme-toggle:hover,
-[data-theme="dracula"] .login-page-v2 .login-theme-toggle:hover {
+[data-theme="dark"] .login-page-v2 .login-theme-toggle:hover{
   background: rgba(255, 255, 255, 0.2);
 }
 
@@ -2476,13 +2472,11 @@ body {
   color: var(--navy-900);
 }
 
-[data-theme="dark"] .login-forgot-link,
-[data-theme="dracula"] .login-forgot-link {
+[data-theme="dark"] .login-forgot-link{
   color: #38bdf8;
 }
 
-[data-theme="dark"] .login-forgot-link:hover,
-[data-theme="dracula"] .login-forgot-link:hover {
+[data-theme="dark"] .login-forgot-link:hover{
   color: #7dd3fc;
 }
 
@@ -2502,8 +2496,7 @@ body {
     margin-top: -2rem;
   }
 
-  [data-theme="dark"] .login-form-panel,
-  [data-theme="dracula"] .login-form-panel {
+  [data-theme="dark"] .login-form-panel {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   }
 }
