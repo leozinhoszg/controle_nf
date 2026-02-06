@@ -162,7 +162,7 @@ export default function Login() {
         {/* Subtle background pattern */}
         <div className="absolute inset-0 login-form-bg"></div>
 
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-16 relative z-10">
+        <div className="flex-1 flex items-start justify-center p-6 sm:p-8 lg:p-16 lg:pt-[27vh] relative z-10">
           <div className="w-full max-w-md login-form-container">
             {/* Mobile Logo */}
             <div className="lg:hidden flex flex-col items-center mb-10">
@@ -348,7 +348,7 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 pb-6 text-center">
+        <div className="absolute bottom-0 left-0 right-0 z-10 pb-6 text-center">
           <p className="text-xs text-gray-400 dark:text-gray-500">
             PROMA SIGMA &copy; {new Date().getFullYear()} &bull; Todos os direitos reservados
           </p>

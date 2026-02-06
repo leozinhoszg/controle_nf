@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export default function ThemeToggle({ className = '' }) {
   const [theme, setTheme] = useState(() => {
@@ -8,34 +8,54 @@ export default function ThemeToggle({ className = '' }) {
     return 'light';
   });
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
-    // Aplica o tema inicial sem transição
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, []);
 
+  // Limpa timeout pendente ao desmontar
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const applyTheme = useCallback((newTheme) => {
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    setTheme(newTheme);
+  }, []);
+
   const toggleTheme = useCallback(() => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-
-    // Ativa a classe de transição
     setIsTransitioning(true);
+
+    // View Transitions API — cross-fade via GPU, sem wildcard selector
+    if (document.startViewTransition) {
+      const transition = document.startViewTransition(() => {
+        applyTheme(newTheme);
+      });
+      transition.finished.then(() => setIsTransitioning(false));
+      return;
+    }
+
+    // Fallback: transição via classe em elementos-chave
     document.documentElement.classList.add('theme-transitioning');
 
-    // Pequeno delay para garantir que a classe foi aplicada antes da mudança
+    // Double rAF garante que o browser aplicou a classe antes da mudança
     requestAnimationFrame(() => {
-      // Aplica o novo tema
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      setTheme(newTheme);
+      requestAnimationFrame(() => {
+        applyTheme(newTheme);
+      });
     });
 
-    // Remove a classe de transição após a animação
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       document.documentElement.classList.remove('theme-transitioning');
       setIsTransitioning(false);
-    }, 300);
-  }, [theme]);
+    }, 400);
+  }, [theme, applyTheme]);
 
   return (
     <button

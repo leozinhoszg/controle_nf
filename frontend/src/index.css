@@ -1285,47 +1285,36 @@ body {
   box-shadow: 0 4px 15px rgba(3, 105, 161, 0.35);
 }
 
-/* Theme toggle transition */
-html {
-  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+/* ===== Theme transition — View Transitions API (primary) ===== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html.theme-transitioning,
-html.theme-transitioning *,
-html.theme-transitioning *::before,
-html.theme-transitioning *::after {
+/* ===== Theme transition — fallback (browsers sem View Transitions) ===== */
+html.theme-transitioning body,
+html.theme-transitioning .navbar-header,
+html.theme-transitioning .sidebar,
+html.theme-transitioning .glass,
+html.theme-transitioning .glass-card,
+html.theme-transitioning .glass-sidebar,
+html.theme-transitioning .glass-header,
+html.theme-transitioning .glass-modal,
+html.theme-transitioning .glass-input,
+html.theme-transitioning .stat-card-glass,
+html.theme-transitioning .table-glass,
+html.theme-transitioning .login-page-v2,
+html.theme-transitioning .login-form-panel,
+html.theme-transitioning .login-brand-panel,
+html.theme-transitioning .login-input,
+html.theme-transitioning .user-dropdown,
+html.theme-transitioning .btn-primary {
   transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    fill 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    stroke 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Previne piscadas durante a transição */
-html.theme-transitioning {
-  pointer-events: none;
-}
-
-/* Transição suave para o gradiente de fundo */
-body {
-  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Elementos glass com transição mais suave */
-.glass,
-.glass-card,
-.glass-sidebar,
-.glass-header,
-.glass-modal,
-.glass-input,
-.stat-card-glass,
-.table-glass {
-  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* ==================== MELHORIAS VISUAIS LOGIN - v2 ==================== */
@@ -2008,12 +1997,12 @@ body {
 .login-feature-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
 }
@@ -2025,8 +2014,8 @@ body {
 }
 
 .login-feature-icon {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2035,7 +2024,7 @@ body {
     rgba(14, 165, 233, 0.25),
     rgba(30, 58, 95, 0.5)
   );
-  border-radius: 12px;
+  border-radius: 9px;
   color: #7dd3fc;
   flex-shrink: 0;
   border: 1px solid rgba(125, 211, 252, 0.15);
