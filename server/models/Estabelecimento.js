@@ -1,35 +1,37 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const estabelecimentoSchema = new mongoose.Schema({
-    empresa: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Empresa',
-        required: [true, 'Empresa é obrigatória']
+const Estabelecimento = sequelize.define('Estabelecimento', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
     },
-    codEstabel: {
-        type: String,
-        required: [true, 'Código do estabelecimento é obrigatório'],
-        trim: true
+    empresa_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
+    },
+    cod_estabel: {
+        type: DataTypes.STRING(10),
+        allowNull: false
     },
     nome: {
-        type: String,
-        required: [true, 'Nome do estabelecimento é obrigatório'],
-        trim: true,
-        uppercase: true
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        set(val) {
+            this.setDataValue('nome', val ? val.toUpperCase().trim() : val);
+        }
     },
     ativo: {
-        type: Boolean,
-        default: true
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
     }
 }, {
-    timestamps: true
+    tableName: 'estabelecimentos',
+    indexes: [
+        { unique: true, fields: ['empresa_id', 'cod_estabel'] }
+    ]
 });
 
-// Index composto para garantir que código do estabelecimento seja único por empresa
-estabelecimentoSchema.index({ empresa: 1, codEstabel: 1 }, { unique: true });
-
-// Garantir que virtuals sejam incluídos no JSON
-estabelecimentoSchema.set('toJSON', { virtuals: true });
-estabelecimentoSchema.set('toObject', { virtuals: true });
-
-module.exports = mongoose.model('Estabelecimento', estabelecimentoSchema);
+module.exports = Estabelecimento;

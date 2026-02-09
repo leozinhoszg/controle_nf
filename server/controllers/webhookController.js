@@ -1,11 +1,28 @@
-const { Webhook } = require('../models');
+const { Webhook, WebhookEvento } = require('../models');
 const webhookService = require('../services/webhookService');
+
+// Include padrao para eventos
+const eventosInclude = [{ model: WebhookEvento, as: 'eventosRef' }];
+
+// Helper para formatar webhook com eventos como array
+const formatWebhook = (webhook) => {
+    if (!webhook) return null;
+    const plain = webhook.toJSON ? webhook.toJSON() : webhook;
+    return {
+        ...plain,
+        eventos: plain.eventosRef ? plain.eventosRef.map(e => e.evento) : [],
+        eventosRef: undefined
+    };
+};
 
 // Listar todos os webhooks
 exports.getAll = async (req, res) => {
     try {
-        const webhooks = await Webhook.find().sort({ createdAt: -1 });
-        res.json(webhooks);
+        const webhooks = await Webhook.findAll({
+            include: eventosInclude,
+            order: [['created_at', 'DESC']]
+        });
+        res.json(webhooks.map(formatWebhook));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -14,11 +31,13 @@ exports.getAll = async (req, res) => {
 // Buscar webhook por ID
 exports.getById = async (req, res) => {
     try {
-        const webhook = await Webhook.findById(req.params.id);
+        const webhook = await Webhook.findByPk(req.params.id, {
+            include: eventosInclude
+        });
         if (!webhook) {
             return res.status(404).json({ message: 'Webhook nao encontrado' });
         }
-        res.json(webhook);
+        res.json(formatWebhook(webhook));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -27,14 +46,26 @@ exports.getById = async (req, res) => {
 // Criar novo webhook (registrar URL do n8n)
 exports.create = async (req, res) => {
     try {
-        const webhook = new Webhook({
+        const webhook = await Webhook.create({
             nome: req.body.nome,
             url: req.body.url,
-            eventos: req.body.eventos || ['nf_atrasada'],
             ativo: req.body.ativo !== false
         });
-        const novoWebhook = await webhook.save();
-        res.status(201).json(novoWebhook);
+
+        // Criar eventos no junction table
+        const eventos = req.body.eventos || ['nf_atrasada'];
+        if (eventos.length > 0) {
+            await WebhookEvento.bulkCreate(
+                eventos.map(e => ({ webhook_id: webhook.id, evento: e }))
+            );
+        }
+
+        // Recarregar com eventos
+        const webhookCompleto = await Webhook.findByPk(webhook.id, {
+            include: eventosInclude
+        });
+
+        res.status(201).json(formatWebhook(webhookCompleto));
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -43,22 +74,36 @@ exports.create = async (req, res) => {
 // Atualizar webhook
 exports.update = async (req, res) => {
     try {
-        const updateData = {};
-        if (req.body.nome) updateData.nome = req.body.nome;
-        if (req.body.url) updateData.url = req.body.url;
-        if (req.body.eventos) updateData.eventos = req.body.eventos;
-        if (req.body.ativo !== undefined) updateData.ativo = req.body.ativo;
-
-        const webhook = await Webhook.findByIdAndUpdate(
-            req.params.id,
-            updateData,
-            { new: true, runValidators: true }
-        );
-
+        const webhook = await Webhook.findByPk(req.params.id);
         if (!webhook) {
             return res.status(404).json({ message: 'Webhook nao encontrado' });
         }
-        res.json(webhook);
+
+        const updateData = {};
+        if (req.body.nome) updateData.nome = req.body.nome;
+        if (req.body.url) updateData.url = req.body.url;
+        if (req.body.ativo !== undefined) updateData.ativo = req.body.ativo;
+
+        await webhook.update(updateData);
+
+        // Atualizar eventos se fornecidos
+        if (req.body.eventos) {
+            // Deletar eventos antigos
+            await WebhookEvento.destroy({ where: { webhook_id: req.params.id } });
+            // Criar novos eventos
+            if (req.body.eventos.length > 0) {
+                await WebhookEvento.bulkCreate(
+                    req.body.eventos.map(e => ({ webhook_id: req.params.id, evento: e }))
+                );
+            }
+        }
+
+        // Recarregar com eventos
+        const webhookAtualizado = await Webhook.findByPk(req.params.id, {
+            include: eventosInclude
+        });
+
+        res.json(formatWebhook(webhookAtualizado));
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -67,10 +112,17 @@ exports.update = async (req, res) => {
 // Excluir webhook
 exports.delete = async (req, res) => {
     try {
-        const webhook = await Webhook.findByIdAndDelete(req.params.id);
+        const webhook = await Webhook.findByPk(req.params.id);
         if (!webhook) {
             return res.status(404).json({ message: 'Webhook nao encontrado' });
         }
+
+        // Excluir eventos do junction table
+        await WebhookEvento.destroy({ where: { webhook_id: req.params.id } });
+
+        // Excluir webhook
+        await Webhook.destroy({ where: { id: req.params.id } });
+
         res.json({ message: 'Webhook excluido com sucesso' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -80,7 +132,7 @@ exports.delete = async (req, res) => {
 // Testar webhook (dispara um evento de teste)
 exports.testar = async (req, res) => {
     try {
-        const webhook = await Webhook.findById(req.params.id);
+        const webhook = await Webhook.findByPk(req.params.id);
         if (!webhook) {
             return res.status(404).json({ message: 'Webhook nao encontrado' });
         }
@@ -101,8 +153,8 @@ exports.testar = async (req, res) => {
         });
 
         if (response.ok) {
-            webhook.ultimoDisparo = new Date();
-            webhook.falhasConsecutivas = 0;
+            webhook.ultimo_disparo = new Date();
+            webhook.falhas_consecutivas = 0;
             await webhook.save();
             res.json({ message: 'Webhook testado com sucesso', status: response.status });
         } else {

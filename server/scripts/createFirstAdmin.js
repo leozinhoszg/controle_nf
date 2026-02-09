@@ -1,26 +1,7 @@
-/**
- * Script para criar o primeiro usuario administrador do sistema
- *
- * Use este script na primeira vez que a aplicacao for utilizada
- * para criar um usuario admin com acesso total.
- *
- * Execute com: node scripts/createFirstAdmin.js
- *
- * Credenciais padrao:
- *   Usuario: admin
- *   Senha: admin123
- *   Email: admin@sistema.com
- *
- * IMPORTANTE: Altere a senha apos o primeiro login!
- */
-
 require('dotenv').config();
-const mongoose = require('mongoose');
-const { User, Perfil } = require('../models');
+const { sequelize } = require('../config/db');
+const { User, Perfil, PerfilPermissao } = require('../models');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/controle';
-
-// Dados do usuario administrador inicial
 const ADMIN_USER = {
     usuario: 'admin',
     email: 'admin@sistema.com',
@@ -33,83 +14,71 @@ async function createFirstAdmin() {
         console.log('='.repeat(60));
         console.log('  CRIACAO DO PRIMEIRO USUARIO ADMINISTRADOR');
         console.log('='.repeat(60));
-        console.log('\nConectando ao MongoDB...');
-        await mongoose.connect(MONGODB_URI);
+        console.log('\nConectando ao MySQL...');
+        await sequelize.authenticate();
+        await sequelize.sync();
         console.log('Conectado!\n');
 
-        // Verificar se ja existe algum usuario no sistema
-        const totalUsuarios = await User.countDocuments();
-
+        const totalUsuarios = await User.count();
         if (totalUsuarios > 0) {
             console.log('AVISO: Ja existem usuarios cadastrados no sistema.');
             console.log(`Total de usuarios: ${totalUsuarios}`);
             console.log('\nEste script so deve ser executado na primeira utilizacao.');
-            console.log('Para criar novos admins, use o painel de usuarios.\n');
-
-            // Verificar se existe o usuario admin
-            const adminExistente = await User.findOne({ usuario: 'admin' });
+            const adminExistente = await User.unscoped().findOne({ where: { usuario: 'admin' } });
             if (adminExistente) {
                 console.log('O usuario "admin" ja existe no sistema.');
             }
-
             return;
         }
 
-        // Criar ou obter perfil Administrador
         console.log('Verificando perfil Administrador...');
-        let perfilAdmin = await Perfil.findOne({ isAdmin: true });
+        let perfilAdmin = await Perfil.findOne({ where: { is_admin: true } });
 
         if (!perfilAdmin) {
             console.log('Criando perfil Administrador...');
-            perfilAdmin = new Perfil({
+            perfilAdmin = await Perfil.create({
                 nome: 'Administrador',
                 descricao: 'Acesso total ao sistema',
-                permissoes: ['dashboard', 'fornecedores', 'contratos', 'relatorio', 'usuarios', 'perfis'],
-                isAdmin: true,
+                is_admin: true,
                 ativo: true
             });
-            await perfilAdmin.save();
+            await PerfilPermissao.bulkCreate([
+                'dashboard', 'fornecedores', 'contratos', 'relatorio', 'usuarios', 'perfis', 'auditoria'
+            ].map(p => ({ perfil_id: perfilAdmin.id, permissao: p })));
             console.log('Perfil Administrador criado com sucesso!\n');
         } else {
             console.log('Perfil Administrador ja existe.\n');
         }
 
-        // Criar usuario administrador
         console.log('Criando usuario administrador...');
-
-        const novoAdmin = new User({
+        await User.create({
             usuario: ADMIN_USER.usuario,
             email: ADMIN_USER.email,
             senha: ADMIN_USER.senha,
             nome: ADMIN_USER.nome,
-            perfil: perfilAdmin._id,
+            perfil_id: perfilAdmin.id,
             ativo: true,
-            emailVerificado: true // Ja verificado para uso imediato
+            email_verificado: true,
+            conta_ativada: true
         });
-
-        await novoAdmin.save();
 
         console.log('\n' + '='.repeat(60));
         console.log('  USUARIO ADMINISTRADOR CRIADO COM SUCESSO!');
         console.log('='.repeat(60));
-        console.log('\n  Credenciais de acesso:');
-        console.log('  -----------------------');
-        console.log(`  Usuario: ${ADMIN_USER.usuario}`);
+        console.log(`\n  Usuario: ${ADMIN_USER.usuario}`);
         console.log(`  Senha:   ${ADMIN_USER.senha}`);
         console.log(`  Email:   ${ADMIN_USER.email}`);
         console.log('\n  IMPORTANTE: Altere a senha apos o primeiro login!');
         console.log('='.repeat(60));
-
     } catch (error) {
-        if (error.code === 11000) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
             console.error('\nERRO: Usuario ou email ja existe no sistema.');
-            console.error('Detalhes:', error.message);
         } else {
             console.error('\nErro ao criar usuario:', error.message);
         }
     } finally {
-        await mongoose.disconnect();
-        console.log('\nDesconectado do MongoDB.');
+        await sequelize.close();
+        console.log('\nDesconectado do MySQL.');
         process.exit(0);
     }
 }

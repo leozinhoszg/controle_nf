@@ -4,7 +4,10 @@ const auditService = require('../services/auditService');
 // Listar todas as empresas
 exports.getAll = async (req, res) => {
     try {
-        const empresas = await Empresa.find().sort({ nome: 1 }).populate('estabelecimentos');
+        const empresas = await Empresa.findAll({
+            order: [['nome', 'ASC']],
+            include: [{ model: Estabelecimento, as: 'estabelecimentos' }]
+        });
         res.json(empresas);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -14,7 +17,9 @@ exports.getAll = async (req, res) => {
 // Buscar empresa por ID
 exports.getById = async (req, res) => {
     try {
-        const empresa = await Empresa.findById(req.params.id).populate('estabelecimentos');
+        const empresa = await Empresa.findByPk(req.params.id, {
+            include: [{ model: Estabelecimento, as: 'estabelecimentos' }]
+        });
         if (!empresa) {
             return res.status(404).json({ message: 'Empresa nao encontrada' });
         }
@@ -27,19 +32,18 @@ exports.getById = async (req, res) => {
 // Criar nova empresa
 exports.create = async (req, res) => {
     try {
-        const empresa = new Empresa({
-            codEmpresa: req.body.codEmpresa,
+        const novaEmpresa = await Empresa.create({
+            cod_empresa: req.body.cod_empresa,
             nome: req.body.nome,
             ativo: req.body.ativo !== undefined ? req.body.ativo : true
         });
-        const novaEmpresa = await empresa.save();
 
         // Log de auditoria
         await auditService.logCrud(req, 'CRIAR', 'EMPRESA', 'Empresa', {
-            recursoId: novaEmpresa._id,
+            recursoId: novaEmpresa.id,
             recursoNome: novaEmpresa.nome,
-            descricao: `Empresa criada: ${novaEmpresa.nome} (${novaEmpresa.codEmpresa})`,
-            dadosNovos: { codEmpresa: novaEmpresa.codEmpresa, nome: novaEmpresa.nome }
+            descricao: `Empresa criada: ${novaEmpresa.nome} (${novaEmpresa.cod_empresa})`,
+            dadosNovos: { cod_empresa: novaEmpresa.cod_empresa, nome: novaEmpresa.nome }
         });
 
         res.status(201).json(novaEmpresa);
@@ -51,28 +55,29 @@ exports.create = async (req, res) => {
 // Atualizar empresa
 exports.update = async (req, res) => {
     try {
-        const empresaAnterior = await Empresa.findById(req.params.id);
+        const empresaAnterior = await Empresa.findByPk(req.params.id);
         if (!empresaAnterior) {
             return res.status(404).json({ message: 'Empresa nao encontrada' });
         }
 
-        const empresa = await Empresa.findByIdAndUpdate(
-            req.params.id,
+        await Empresa.update(
             {
-                codEmpresa: req.body.codEmpresa,
+                cod_empresa: req.body.cod_empresa,
                 nome: req.body.nome,
                 ativo: req.body.ativo
             },
-            { new: true, runValidators: true }
+            { where: { id: req.params.id } }
         );
+
+        const empresa = await Empresa.findByPk(req.params.id);
 
         // Log de auditoria
         await auditService.logCrud(req, 'ATUALIZAR', 'EMPRESA', 'Empresa', {
-            recursoId: empresa._id,
+            recursoId: empresa.id,
             recursoNome: empresa.nome,
             descricao: `Empresa atualizada: ${empresa.nome}`,
-            dadosAnteriores: { codEmpresa: empresaAnterior.codEmpresa, nome: empresaAnterior.nome, ativo: empresaAnterior.ativo },
-            dadosNovos: { codEmpresa: empresa.codEmpresa, nome: empresa.nome, ativo: empresa.ativo }
+            dadosAnteriores: { cod_empresa: empresaAnterior.cod_empresa, nome: empresaAnterior.nome, ativo: empresaAnterior.ativo },
+            dadosNovos: { cod_empresa: empresa.cod_empresa, nome: empresa.nome, ativo: empresa.ativo }
         });
 
         res.json(empresa);
@@ -84,26 +89,26 @@ exports.update = async (req, res) => {
 // Excluir empresa (cascata)
 exports.delete = async (req, res) => {
     try {
-        const empresa = await Empresa.findById(req.params.id);
+        const empresa = await Empresa.findByPk(req.params.id);
         if (!empresa) {
             return res.status(404).json({ message: 'Empresa nao encontrada' });
         }
 
         // Contar estabelecimentos que serao excluidos
-        const estabelecimentos = await Estabelecimento.find({ empresa: req.params.id });
+        const estabelecimentos = await Estabelecimento.findAll({ where: { empresa_id: req.params.id } });
 
         // Excluir estabelecimentos
-        await Estabelecimento.deleteMany({ empresa: req.params.id });
+        await Estabelecimento.destroy({ where: { empresa_id: req.params.id } });
 
         // Excluir empresa
-        await Empresa.findByIdAndDelete(req.params.id);
+        await Empresa.destroy({ where: { id: req.params.id } });
 
         // Log de auditoria
         await auditService.logCrud(req, 'EXCLUIR', 'EMPRESA', 'Empresa', {
             recursoId: req.params.id,
             recursoNome: empresa.nome,
             descricao: `Empresa excluida em cascata: ${empresa.nome}`,
-            dadosAnteriores: { codEmpresa: empresa.codEmpresa, nome: empresa.nome },
+            dadosAnteriores: { cod_empresa: empresa.cod_empresa, nome: empresa.nome },
             metadados: {
                 estabelecimentosExcluidos: estabelecimentos.length
             },

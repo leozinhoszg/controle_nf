@@ -1,45 +1,50 @@
-/**
- * Script para adicionar permissao 'auditoria' aos perfis de administradores
- *
- * Execute com: node scripts/addAuditoriaPermission.js
- */
-
 require('dotenv').config();
-const mongoose = require('mongoose');
-const { Perfil } = require('../models');
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/controle';
+const { sequelize } = require('../config/db');
+const { Perfil, PerfilPermissao } = require('../models');
 
 async function addAuditoriaPermission() {
     try {
-        console.log('Conectando ao MongoDB...');
-        await mongoose.connect(MONGODB_URI);
+        console.log('Conectando ao MySQL...');
+        await sequelize.authenticate();
+        await sequelize.sync();
         console.log('Conectado!\n');
 
-        // Buscar perfis admin ou que ja tenham a maioria das permissoes
-        const perfisAdmin = await Perfil.find({
-            $or: [
-                { isAdmin: true },
-                { permissoes: { $in: ['usuarios', 'perfis'] } }
-            ]
+        const perfisAdmin = await Perfil.findAll({
+            where: {
+                [require('sequelize').Op.or]: [
+                    { is_admin: true }
+                ]
+            },
+            include: [{ model: PerfilPermissao, as: 'permissoesRef' }]
         });
 
-        console.log(`Encontrados ${perfisAdmin.length} perfil(is) para atualizar:\n`);
+        // Also find perfis with 'usuarios' or 'perfis' permission
+        const perfisComPermissao = await Perfil.findAll({
+            include: [{
+                model: PerfilPermissao,
+                as: 'permissoesRef',
+                where: { permissao: { [require('sequelize').Op.in]: ['usuarios', 'perfis'] } },
+                required: true
+            }]
+        });
+
+        const todosPerfis = [...new Map([...perfisAdmin, ...perfisComPermissao].map(p => [p.id, p])).values()];
+
+        console.log(`Encontrados ${todosPerfis.length} perfil(is) para atualizar:\n`);
 
         let atualizados = 0;
         let jaTemPermissao = 0;
 
-        for (const perfil of perfisAdmin) {
-            // Verificar se ja tem a permissao
-            if (perfil.permissoes.includes('auditoria')) {
+        for (const perfil of todosPerfis) {
+            const permissoes = perfil.permissoesRef ? perfil.permissoesRef.map(p => p.permissao) : [];
+
+            if (permissoes.includes('auditoria')) {
                 console.log(`  [SKIP] ${perfil.nome} - ja possui permissao de auditoria`);
                 jaTemPermissao++;
                 continue;
             }
 
-            // Adicionar permissao
-            perfil.permissoes.push('auditoria');
-            await perfil.save();
+            await PerfilPermissao.create({ perfil_id: perfil.id, permissao: 'auditoria' });
             console.log(`  [OK] ${perfil.nome} - permissao de auditoria adicionada`);
             atualizados++;
         }
@@ -50,12 +55,11 @@ async function addAuditoriaPermission() {
         console.log(`  - Perfis que ja tinham: ${jaTemPermissao}`);
         console.log('='.repeat(50));
         console.log('Migracao concluida com sucesso!');
-
     } catch (error) {
         console.error('Erro:', error.message);
     } finally {
-        await mongoose.disconnect();
-        console.log('\nDesconectado do MongoDB.');
+        await sequelize.close();
+        console.log('\nDesconectado do MySQL.');
         process.exit(0);
     }
 }

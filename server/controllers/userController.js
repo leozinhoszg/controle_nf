@@ -1,36 +1,58 @@
-const { User, Perfil } = require('../models');
+const { Op } = require('sequelize');
+const { User, Perfil, PerfilPermissao } = require('../models');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
+
+// Helper para formatar perfil com permissoes do junction table
+const formatPerfilComPermissoes = (perfil) => {
+    if (!perfil) return null;
+    return {
+        id: perfil.id,
+        nome: perfil.nome,
+        is_admin: perfil.is_admin,
+        permissoes: perfil.permissoesRef ? perfil.permissoesRef.map(p => p.permissao) : []
+    };
+};
+
+// Include padrao para perfil com permissoes
+const perfilInclude = [
+    {
+        model: Perfil,
+        as: 'perfil',
+        include: [{ model: PerfilPermissao, as: 'permissoesRef' }]
+    }
+];
 
 // Listar todos os usuarios
 exports.getAll = async (req, res) => {
     try {
         const { ativo, perfil, busca } = req.query;
 
-        let filtro = {};
+        let where = {};
 
         // Filtrar por status ativo
         if (ativo !== undefined) {
-            filtro.ativo = ativo === 'true';
+            where.ativo = ativo === 'true';
         }
 
         // Filtrar por perfil
         if (perfil) {
-            filtro.perfil = perfil;
+            where.perfil_id = perfil;
         }
 
         // Busca por usuario ou email
         if (busca) {
-            filtro.$or = [
-                { usuario: { $regex: busca, $options: 'i' } },
-                { email: { $regex: busca, $options: 'i' } }
+            where[Op.or] = [
+                { usuario: { [Op.like]: `%${busca}%` } },
+                { email: { [Op.like]: `%${busca}%` } }
             ];
         }
 
-        const usuarios = await User.find(filtro)
-            .select('-tokenVerificacaoEmail -tokenVerificacaoExpira -tokenResetSenha -tokenResetExpira -tentativasLogin -bloqueadoAte')
-            .populate('perfil', 'nome permissoes isAdmin')
-            .sort({ createdAt: -1 });
+        const usuarios = await User.findAll({
+            where,
+            include: perfilInclude,
+            order: [['created_at', 'DESC']]
+        });
 
         res.json(usuarios);
     } catch (error) {
@@ -41,9 +63,9 @@ exports.getAll = async (req, res) => {
 // Buscar usuario por ID
 exports.getById = async (req, res) => {
     try {
-        const usuario = await User.findById(req.params.id)
-            .select('-tokenVerificacaoEmail -tokenVerificacaoExpira -tokenResetSenha -tokenResetExpira -tentativasLogin -bloqueadoAte')
-            .populate('perfil', 'nome permissoes isAdmin');
+        const usuario = await User.findByPk(req.params.id, {
+            include: perfilInclude
+        });
 
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
@@ -62,7 +84,9 @@ exports.create = async (req, res) => {
 
         // Verificar se usuario ou email ja existem
         const usuarioExistente = await User.findOne({
-            $or: [{ email }, { usuario }]
+            where: {
+                [Op.or]: [{ email }, { usuario }]
+            }
         });
 
         if (usuarioExistente) {
@@ -75,7 +99,7 @@ exports.create = async (req, res) => {
 
         // Verificar se perfil existe
         if (perfil) {
-            const perfilExistente = await Perfil.findById(perfil);
+            const perfilExistente = await Perfil.findByPk(perfil);
             if (!perfilExistente) {
                 return res.status(400).json({ message: 'Perfil nao encontrado' });
             }
@@ -85,13 +109,13 @@ exports.create = async (req, res) => {
         }
 
         // Criar usuario sem senha - usuario vai definir ao ativar a conta
-        const novoUsuario = new User({
+        const novoUsuario = await User.create({
             usuario,
             email,
-            perfil: perfil || null,
+            perfil_id: perfil || null,
             ativo: ativo !== undefined ? ativo : true,
-            contaAtivada: false, // Conta nao ativada ate usuario definir senha
-            emailVerificado: false
+            conta_ativada: false, // Conta nao ativada ate usuario definir senha
+            email_verificado: false
         });
 
         // Gerar token de ativacao de conta
@@ -111,20 +135,20 @@ exports.create = async (req, res) => {
         }
 
         // Retornar com perfil populado
-        const usuarioResponse = await User.findById(novoUsuario._id)
-            .select('-tokenVerificacaoEmail -tokenVerificacaoExpira -tokenResetSenha -tokenResetExpira -tentativasLogin -bloqueadoAte -tokenAtivacaoConta -tokenAtivacaoExpira')
-            .populate('perfil', 'nome permissoes isAdmin');
+        const usuarioResponse = await User.findByPk(novoUsuario.id, {
+            include: perfilInclude
+        });
 
         // Buscar nome do perfil para auditoria
         let perfilNome = null;
         if (perfil) {
-            const perfilDoc = await Perfil.findById(perfil).select('nome');
+            const perfilDoc = await Perfil.findByPk(perfil, { attributes: ['nome'] });
             perfilNome = perfilDoc?.nome || null;
         }
 
         // Log de auditoria
         await auditService.logCrud(req, 'CRIAR', 'USUARIO', 'User', {
-            recursoId: novoUsuario._id,
+            recursoId: novoUsuario.id,
             recursoNome: novoUsuario.usuario,
             descricao: `Usuario criado: ${novoUsuario.usuario}`,
             dadosNovos: {
@@ -152,19 +176,22 @@ exports.update = async (req, res) => {
         const userId = req.params.id;
 
         // Verificar se usuario existe
-        const usuarioExistente = await User.findById(userId);
+        const usuarioExistente = await User.findByPk(userId);
         if (!usuarioExistente) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
 
         // Verificar duplicidade de usuario/email
         if (usuario || email) {
+            const orConditions = [];
+            if (email) orConditions.push({ email });
+            if (usuario) orConditions.push({ usuario });
+
             const duplicado = await User.findOne({
-                _id: { $ne: userId },
-                $or: [
-                    ...(email ? [{ email }] : []),
-                    ...(usuario ? [{ usuario }] : [])
-                ]
+                where: {
+                    id: { [Op.ne]: userId },
+                    [Op.or]: orConditions
+                }
             });
 
             if (duplicado) {
@@ -178,7 +205,7 @@ exports.update = async (req, res) => {
 
         // Verificar se perfil existe
         if (perfil) {
-            const perfilExistente = await Perfil.findById(perfil);
+            const perfilExistente = await Perfil.findByPk(perfil);
             if (!perfilExistente) {
                 return res.status(400).json({ message: 'Perfil nao encontrado' });
             }
@@ -188,20 +215,20 @@ exports.update = async (req, res) => {
         const camposAtualizar = {};
         if (usuario) camposAtualizar.usuario = usuario;
         if (email) camposAtualizar.email = email;
-        if (perfil !== undefined) camposAtualizar.perfil = perfil || null;
+        if (perfil !== undefined) camposAtualizar.perfil_id = perfil || null;
         if (ativo !== undefined) camposAtualizar.ativo = ativo;
 
         // Buscar nomes dos perfis para auditoria
         let perfilAnteriorNome = null;
         let perfilNovoNome = null;
 
-        if (usuarioExistente.perfil) {
-            const perfilAnteriorDoc = await Perfil.findById(usuarioExistente.perfil).select('nome');
+        if (usuarioExistente.perfil_id) {
+            const perfilAnteriorDoc = await Perfil.findByPk(usuarioExistente.perfil_id, { attributes: ['nome'] });
             perfilAnteriorNome = perfilAnteriorDoc?.nome || null;
         }
 
         if (perfil) {
-            const perfilNovoDoc = await Perfil.findById(perfil).select('nome');
+            const perfilNovoDoc = await Perfil.findByPk(perfil, { attributes: ['nome'] });
             perfilNovoNome = perfilNovoDoc?.nome || null;
         }
 
@@ -209,22 +236,21 @@ exports.update = async (req, res) => {
         const dadosAnteriores = {
             usuario: usuarioExistente.usuario,
             email: usuarioExistente.email,
-            perfil: perfilAnteriorNome ? `${perfilAnteriorNome} (${usuarioExistente.perfil})` : null,
+            perfil: perfilAnteriorNome ? `${perfilAnteriorNome} (${usuarioExistente.perfil_id})` : null,
             ativo: usuarioExistente.ativo
         };
 
-        const usuarioAtualizado = await User.findByIdAndUpdate(
-            userId,
-            camposAtualizar,
-            { new: true, runValidators: true }
-        )
-            .select('-tokenVerificacaoEmail -tokenVerificacaoExpira -tokenResetSenha -tokenResetExpira -tentativasLogin -bloqueadoAte')
-            .populate('perfil', 'nome permissoes isAdmin');
+        await User.update(camposAtualizar, { where: { id: userId } });
+
+        const usuarioAtualizado = await User.findByPk(userId, {
+            include: perfilInclude
+        });
 
         // Preparar dados novos para auditoria
         const dadosNovosAuditoria = { ...camposAtualizar };
         if (perfil !== undefined) {
             dadosNovosAuditoria.perfil = perfilNovoNome ? `${perfilNovoNome} (${perfil})` : null;
+            delete dadosNovosAuditoria.perfil_id;
         }
 
         // Log de auditoria
@@ -255,12 +281,12 @@ exports.delete = async (req, res) => {
             return res.status(400).json({ message: 'Voce nao pode excluir sua propria conta' });
         }
 
-        const usuario = await User.findById(userId);
+        const usuario = await User.findByPk(userId);
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
 
-        await User.findByIdAndDelete(userId);
+        await User.destroy({ where: { id: userId } });
 
         // Log de auditoria
         await auditService.logCrud(req, 'EXCLUIR', 'USUARIO', 'User', {
@@ -287,7 +313,7 @@ exports.alterarSenha = async (req, res) => {
             return res.status(400).json({ message: 'Senha deve ter no minimo 6 caracteres' });
         }
 
-        const usuario = await User.findById(userId);
+        const usuario = await User.scope('withSenha').findByPk(userId);
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
@@ -319,7 +345,7 @@ exports.toggleAtivo = async (req, res) => {
             return res.status(400).json({ message: 'Voce nao pode desativar sua propria conta' });
         }
 
-        const usuario = await User.findById(userId);
+        const usuario = await User.findByPk(userId);
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }

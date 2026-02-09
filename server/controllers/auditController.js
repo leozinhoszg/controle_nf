@@ -16,7 +16,7 @@ exports.getLogs = async (req, res) => {
             dataInicio,
             dataFim,
             busca,
-            ordenarPor = 'createdAt',
+            ordenarPor = 'created_at',
             ordem = 'desc'
         } = req.query;
 
@@ -171,7 +171,7 @@ exports.exportar = async (req, res) => {
         const resultado = await auditService.buscar(filtros, {
             pagina: 1,
             limite: parseInt(limite),
-            ordenarPor: 'createdAt',
+            ordenarPor: 'created_at',
             ordem: 'desc'
         });
 
@@ -195,7 +195,7 @@ exports.exportar = async (req, res) => {
             ];
 
             const rows = resultado.logs.map(log => [
-                new Date(log.createdAt).toISOString(),
+                new Date(log.created_at).toISOString(),
                 log.usuarioNome || 'Sistema',
                 log.acao,
                 log.categoria,

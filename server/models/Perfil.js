@@ -1,45 +1,43 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const perfilSchema = new mongoose.Schema({
+const Perfil = sequelize.define('Perfil', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
+    },
     nome: {
-        type: String,
-        required: [true, 'Nome do perfil e obrigatorio'],
+        type: DataTypes.STRING(50),
+        allowNull: false,
         unique: true,
-        trim: true,
-        maxlength: [50, 'Nome deve ter no maximo 50 caracteres']
+        validate: {
+            notEmpty: { msg: 'Nome do perfil e obrigatorio' },
+            len: { args: [1, 50], msg: 'Nome deve ter no maximo 50 caracteres' }
+        }
     },
     descricao: {
-        type: String,
-        trim: true,
-        maxlength: [200, 'Descricao deve ter no maximo 200 caracteres']
+        type: DataTypes.STRING(200),
+        defaultValue: null,
+        validate: {
+            len: { args: [0, 200], msg: 'Descricao deve ter no maximo 200 caracteres' }
+        }
     },
-    permissoes: [{
-        type: String,
-        enum: [
-            'dashboard',
-            'fornecedores',
-            'contratos',
-            'relatorio',
-            'usuarios',
-            'perfis',
-            'auditoria',
-            'empresas',
-            'estabelecimentos'
-        ]
-    }],
-    isAdmin: {
-        type: Boolean,
-        default: false
+    is_admin: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     },
     ativo: {
-        type: Boolean,
-        default: true
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
     }
 }, {
-    timestamps: true
+    tableName: 'perfis',
+    indexes: [
+        { fields: ['nome'] }
+    ]
 });
 
-// Indice para buscas por nome
-perfilSchema.index({ nome: 1 });
-
-module.exports = mongoose.model('Perfil', perfilSchema);
+module.exports = Perfil;

@@ -1,34 +1,42 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const webhookSchema = new mongoose.Schema({
+const Webhook = sequelize.define('Webhook', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
+    },
     nome: {
-        type: String,
-        required: [true, 'Nome do webhook e obrigatorio'],
-        trim: true
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        validate: {
+            notEmpty: { msg: 'Nome do webhook e obrigatorio' }
+        }
     },
     url: {
-        type: String,
-        required: [true, 'URL do webhook e obrigatoria'],
-        trim: true
+        type: DataTypes.STRING(500),
+        allowNull: false,
+        validate: {
+            notEmpty: { msg: 'URL do webhook e obrigatoria' }
+        }
     },
-    eventos: [{
-        type: String,
-        enum: ['nf_atrasada', 'nf_pendente', 'nf_status_alterado', 'contrato_vencendo', 'resumo_diario'],
-        default: ['nf_atrasada']
-    }],
     ativo: {
-        type: Boolean,
-        default: true
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
     },
-    ultimoDisparo: {
-        type: Date
+    ultimo_disparo: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    falhasConsecutivas: {
-        type: Number,
-        default: 0
+    falhas_consecutivas: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
     }
 }, {
-    timestamps: true
+    tableName: 'webhooks'
 });
 
-module.exports = mongoose.model('Webhook', webhookSchema);
+module.exports = Webhook;

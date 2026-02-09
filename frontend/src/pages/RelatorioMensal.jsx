@@ -60,7 +60,7 @@ export default function RelatorioMensal() {
       const tabela = response.data || [];
       setRelatorio(tabela);
 
-      const fornecedorIds = new Set(tabela.map(row => row.fornecedorId?._id || row.fornecedorId));
+      const fornecedorIds = new Set(tabela.map(row => row.fornecedorId?.id || row.fornecedorId));
       setExpandedFornecedores(fornecedorIds);
     } catch (err) {
       console.error('Erro ao carregar relatório:', err);
@@ -88,7 +88,7 @@ export default function RelatorioMensal() {
   };
 
   const expandAll = () => {
-    const ids = new Set(relatorio.map(row => row.fornecedorId?._id || row.fornecedorId));
+    const ids = new Set(relatorio.map(row => row.fornecedorId?.id || row.fornecedorId));
     setExpandedFornecedores(ids);
   };
 
@@ -159,12 +159,12 @@ export default function RelatorioMensal() {
     const fornecedoresMap = new Map();
 
     relatorio.forEach(row => {
-      const fornecedorId = row.fornecedorId?._id || row.fornecedorId;
-      const contratoId = row.contratoId?._id || row.contratoId;
+      const fornecedorId = row.fornecedorId?.id || row.fornecedorId;
+      const contratoId = row.contratoId?.id || row.contratoId;
 
       if (!fornecedoresMap.has(fornecedorId)) {
         fornecedoresMap.set(fornecedorId, {
-          _id: fornecedorId,
+          id: fornecedorId,
           nome: row.fornecedor,
           contratos: new Map()
         });
@@ -173,7 +173,7 @@ export default function RelatorioMensal() {
       const fornecedor = fornecedoresMap.get(fornecedorId);
       if (!fornecedor.contratos.has(contratoId)) {
         fornecedor.contratos.set(contratoId, {
-          _id: contratoId,
+          id: contratoId,
           numero: row.contrato,
           medicoes: []
         });
@@ -181,7 +181,7 @@ export default function RelatorioMensal() {
 
       const contrato = fornecedor.contratos.get(contratoId);
       contrato.medicoes.push({
-        _id: row.sequenciaId,
+        id: row.sequenciaId,
         sequencia: row.sequencia,
         estabelecimento: row.estabelecimento,
         recebimento: row.recebimento,
@@ -681,14 +681,14 @@ export default function RelatorioMensal() {
         <div className="space-y-4">
           {dadosFiltrados.map((fornecedor, fIdx) => (
             <div
-              key={fornecedor._id}
+              key={fornecedor.id}
               className="glass-card overflow-hidden animate-fadeInUp"
               style={{ animationDelay: `${0.2 + fIdx * 0.06}s`, animationFillMode: 'both' }}
             >
               {/* Header do Fornecedor */}
               <div
                 className="p-4 cursor-pointer hover:bg-base-200/20 transition-colors flex items-center justify-between group"
-                onClick={() => toggleFornecedor(fornecedor._id)}
+                onClick={() => toggleFornecedor(fornecedor.id)}
               >
                 <div className="flex items-center gap-3">
                   {/* Avatar do fornecedor */}
@@ -703,7 +703,7 @@ export default function RelatorioMensal() {
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`h-4 w-4 text-base-content/30 transition-transform duration-200 ${expandedFornecedores.has(fornecedor._id) ? 'rotate-90' : ''}`}
+                    className={`h-4 w-4 text-base-content/30 transition-transform duration-200 ${expandedFornecedores.has(fornecedor.id) ? 'rotate-90' : ''}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -718,19 +718,19 @@ export default function RelatorioMensal() {
                     type="checkbox"
                     className="checkbox checkbox-xs checkbox-primary"
                     checked={fornecedor.contratos?.every(c =>
-                      c.medicoes?.every(m => selectedSequencias.has(m._id))
+                      c.medicoes?.every(m => selectedSequencias.has(m.id))
                     ) || false}
                     onChange={(e) => {
                       e.stopPropagation();
                       const allMedicoes = fornecedor.contratos?.flatMap(c => c.medicoes || []) || [];
-                      const allSelected = allMedicoes.every(m => selectedSequencias.has(m._id));
+                      const allSelected = allMedicoes.every(m => selectedSequencias.has(m.id));
                       setSelectedSequencias(prev => {
                         const newSet = new Set(prev);
                         allMedicoes.forEach(m => {
                           if (allSelected) {
-                            newSet.delete(m._id);
+                            newSet.delete(m.id);
                           } else {
-                            newSet.add(m._id);
+                            newSet.add(m.id);
                           }
                         });
                         return newSet;
@@ -745,10 +745,10 @@ export default function RelatorioMensal() {
               </div>
 
               {/* Contratos e Medições */}
-              {expandedFornecedores.has(fornecedor._id) && fornecedor.contratos?.length > 0 && (
+              {expandedFornecedores.has(fornecedor.id) && fornecedor.contratos?.length > 0 && (
                 <div className="border-t border-base-200/30">
                   {fornecedor.contratos.map((contrato, cIdx) => (
-                    <div key={contrato._id} className={cIdx > 0 ? 'border-t border-base-200/20' : ''}>
+                    <div key={contrato.id} className={cIdx > 0 ? 'border-t border-base-200/20' : ''}>
                       {/* Header do contrato */}
                       <div className="px-4 py-3 bg-base-200/10 flex items-center justify-between">
                         <div className="text-sm font-medium text-base-content/60 flex items-center gap-2">
@@ -761,16 +761,16 @@ export default function RelatorioMensal() {
                           <input
                             type="checkbox"
                             className="checkbox checkbox-xs"
-                            checked={contrato.medicoes?.every(m => selectedSequencias.has(m._id)) || false}
+                            checked={contrato.medicoes?.every(m => selectedSequencias.has(m.id)) || false}
                             onChange={() => {
-                              const allSelected = contrato.medicoes.every(m => selectedSequencias.has(m._id));
+                              const allSelected = contrato.medicoes.every(m => selectedSequencias.has(m.id));
                               setSelectedSequencias(prev => {
                                 const newSet = new Set(prev);
                                 contrato.medicoes.forEach(m => {
                                   if (allSelected) {
-                                    newSet.delete(m._id);
+                                    newSet.delete(m.id);
                                   } else {
-                                    newSet.add(m._id);
+                                    newSet.add(m.id);
                                   }
                                 });
                                 return newSet;
@@ -793,16 +793,16 @@ export default function RelatorioMensal() {
                                   <input
                                     type="checkbox"
                                     className="checkbox checkbox-xs"
-                                    checked={contrato.medicoes.every(m => selectedSequencias.has(m._id))}
+                                    checked={contrato.medicoes.every(m => selectedSequencias.has(m.id))}
                                     onChange={() => {
-                                      const allSelected = contrato.medicoes.every(m => selectedSequencias.has(m._id));
+                                      const allSelected = contrato.medicoes.every(m => selectedSequencias.has(m.id));
                                       setSelectedSequencias(prev => {
                                         const newSet = new Set(prev);
                                         contrato.medicoes.forEach(m => {
                                           if (allSelected) {
-                                            newSet.delete(m._id);
+                                            newSet.delete(m.id);
                                           } else {
-                                            newSet.add(m._id);
+                                            newSet.add(m.id);
                                           }
                                         });
                                         return newSet;
@@ -831,7 +831,7 @@ export default function RelatorioMensal() {
                             <tbody>
                               {contrato.medicoes.map((medicao, mIdx) => (
                                 <tr
-                                  key={medicao._id}
+                                  key={medicao.id}
                                   className="hover:bg-base-200/20 transition-colors"
                                   style={{
                                     animation: 'fadeInUp 0.3s ease forwards',
@@ -843,8 +843,8 @@ export default function RelatorioMensal() {
                                     <input
                                       type="checkbox"
                                       className="checkbox checkbox-xs"
-                                      checked={selectedSequencias.has(medicao._id)}
-                                      onChange={() => toggleSequencia(medicao._id)}
+                                      checked={selectedSequencias.has(medicao.id)}
+                                      onChange={() => toggleSequencia(medicao.id)}
                                       onClick={(e) => e.stopPropagation()}
                                     />
                                   </td>

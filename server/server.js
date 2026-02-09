@@ -2,15 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const connectDB = require('./config/db');
+const { sequelize } = require('./config/db');
+const { connectDB } = require('./config/db');
 const seedData = require('./config/seed');
 const routes = require('./routes');
 
 const app = express();
 
-// Trust proxy - necessario para obter IP real atras de proxies/load balancers
-// Valores: true (confiar em qualquer proxy), 1 (confiar apenas no primeiro proxy)
-// Em producao com nginx/cloudflare, use 'loopback' ou numero de proxies
 app.set('trust proxy', process.env.TRUST_PROXY || 'loopback');
 
 // Middleware
@@ -20,30 +18,30 @@ app.use(express.json());
 // Rotas da API
 app.use('/api', routes);
 
-// Servir arquivos estaticos do frontend (build do Vite)
+// Servir arquivos estaticos do frontend
 const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendPath));
 
-// Rota para o frontend (SPA) - todas as rotas não-API retornam o index.html
+// SPA fallback
 app.get('*', (req, res, next) => {
-    // Se a rota começa com /api, passa para o próximo handler
-    if (req.path.startsWith('/api')) {
-        return next();
-    }
+    if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// Tratamento de erros
+// Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Erro interno do servidor' });
 });
 
-// Iniciar servidor
 const startServer = async () => {
     try {
-        // Conectar ao MongoDB
+        // Conectar ao MySQL
         await connectDB();
+
+        // Sincronizar modelos (criar tabelas se nao existirem)
+        await sequelize.sync();
+        console.log('Tabelas sincronizadas com sucesso');
 
         // Executar seed se banco estiver vazio
         await seedData();
@@ -55,7 +53,7 @@ const startServer = async () => {
   Servidor rodando na porta ${PORT}
 ========================================
 
-  Frontend: http://localhost:${PORT}
+  Frontend: http://localhost:3000
   API:      http://localhost:${PORT}/api
 
   Endpoints disponiveis:

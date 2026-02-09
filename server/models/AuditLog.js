@@ -1,160 +1,109 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const auditLogSchema = new mongoose.Schema({
-    // Informacoes do usuario que executou a acao
-    usuarioId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null
+const AuditLog = sequelize.define('AuditLog', {
+    id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
     },
-    usuarioNome: {
-        type: String,
-        default: 'Sistema'
+    usuario_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        defaultValue: null
     },
-    usuarioEmail: {
-        type: String,
-        default: null
+    usuario_nome: {
+        type: DataTypes.STRING(100),
+        defaultValue: 'Sistema'
     },
-
-    // Tipo de acao
+    usuario_email: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
+    },
     acao: {
-        type: String,
-        required: true,
-        enum: [
-            // Autenticacao
-            'LOGIN_SUCESSO',
-            'LOGIN_FALHA',
-            'LOGIN_BLOQUEADO',
-            'LOGOUT',
-            'LOGOUT_TODOS',
-            'REGISTRO',
-            'CONTA_ATIVADA',
-            'SENHA_ALTERADA',
-            'SENHA_RESET',
-            'SENHA_RESET_SOLICITADO',
-            'EMAIL_VERIFICADO',
-            'OTP_SOLICITADO',
-            'OTP_VERIFICADO',
-            'TOKEN_REFRESH',
-
-            // CRUD Genericos
-            'CRIAR',
-            'ATUALIZAR',
-            'EXCLUIR',
-            'VISUALIZAR',
-
-            // Acoes especificas
-            'ATIVAR',
-            'DESATIVAR',
-            'ALTERAR_PERMISSOES',
-            'ALTERAR_PERFIL',
-            'SINCRONIZAR',
-            'SINCRONIZAR_LOTE',
-            'EXPORTAR',
-            'IMPORTAR',
-
-            // Acoes de email
-            'EMAIL_ENVIADO',
-            'EMAIL_FALHA'
-        ]
+        type: DataTypes.ENUM(
+            'LOGIN_SUCESSO', 'LOGIN_FALHA', 'LOGIN_BLOQUEADO', 'LOGOUT', 'LOGOUT_TODOS',
+            'REGISTRO', 'CONTA_ATIVADA', 'SENHA_ALTERADA', 'SENHA_RESET',
+            'SENHA_RESET_SOLICITADO', 'EMAIL_VERIFICADO', 'OTP_SOLICITADO',
+            'OTP_VERIFICADO', 'TOKEN_REFRESH', 'CRIAR', 'ATUALIZAR', 'EXCLUIR',
+            'VISUALIZAR', 'ATIVAR', 'DESATIVAR', 'ALTERAR_PERMISSOES', 'ALTERAR_PERFIL',
+            'SINCRONIZAR', 'SINCRONIZAR_LOTE', 'EXPORTAR', 'IMPORTAR',
+            'EMAIL_ENVIADO', 'EMAIL_FALHA'
+        ),
+        allowNull: false
     },
-
-    // Categoria/Nivel da acao
     categoria: {
-        type: String,
-        required: true,
-        enum: ['AUTH', 'USUARIO', 'PERFIL', 'FORNECEDOR', 'CONTRATO', 'SEQUENCIA', 'MEDICAO', 'SISTEMA', 'EMAIL', 'EMPRESA', 'ESTABELECIMENTO']
+        type: DataTypes.ENUM(
+            'AUTH', 'USUARIO', 'PERFIL', 'FORNECEDOR', 'CONTRATO', 'SEQUENCIA',
+            'MEDICAO', 'SISTEMA', 'EMAIL', 'EMPRESA', 'ESTABELECIMENTO'
+        ),
+        allowNull: false
     },
-
-    // Nivel de criticidade
     nivel: {
-        type: String,
-        required: true,
-        enum: ['INFO', 'WARN', 'ERROR', 'CRITICAL'],
-        default: 'INFO'
+        type: DataTypes.ENUM('INFO', 'WARN', 'ERROR', 'CRITICAL'),
+        allowNull: false,
+        defaultValue: 'INFO'
     },
-
-    // Recurso afetado
     recurso: {
-        type: String,
-        required: true
+        type: DataTypes.STRING(100),
+        allowNull: false
     },
-    recursoId: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: null
+    recurso_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        defaultValue: null
     },
-    recursoNome: {
-        type: String,
-        default: null
+    recurso_nome: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
     },
-
-    // Detalhes da acao
     descricao: {
-        type: String,
-        required: true
+        type: DataTypes.TEXT,
+        allowNull: false
     },
-
-    // Dados antes da modificacao (para UPDATE/DELETE)
-    dadosAnteriores: {
-        type: mongoose.Schema.Types.Mixed,
-        default: null
+    dados_anteriores: {
+        type: DataTypes.JSON,
+        defaultValue: null
     },
-
-    // Dados apos a modificacao (para CREATE/UPDATE)
-    dadosNovos: {
-        type: mongoose.Schema.Types.Mixed,
-        default: null
+    dados_novos: {
+        type: DataTypes.JSON,
+        defaultValue: null
     },
-
-    // Campos que foram modificados
-    camposAlterados: [{
-        type: String
-    }],
-
-    // Informacoes de contexto
-    enderecoIp: {
-        type: String,
-        default: null
+    campos_alterados: {
+        type: DataTypes.JSON,
+        defaultValue: null
     },
-    userAgent: {
-        type: String,
-        default: null
+    endereco_ip: {
+        type: DataTypes.STRING(45),
+        defaultValue: null
     },
-
-    // Resultado da operacao
+    user_agent: {
+        type: DataTypes.STRING(500),
+        defaultValue: null
+    },
     sucesso: {
-        type: Boolean,
-        required: true,
-        default: true
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
     },
-    mensagemErro: {
-        type: String,
-        default: null
+    mensagem_erro: {
+        type: DataTypes.TEXT,
+        defaultValue: null
     },
-
-    // Metadados adicionais
     metadados: {
-        type: mongoose.Schema.Types.Mixed,
-        default: {}
+        type: DataTypes.JSON,
+        defaultValue: null
     }
 }, {
-    timestamps: true
+    tableName: 'audit_logs',
+    indexes: [
+        { fields: [{ attribute: 'created_at', order: 'DESC' }] },
+        { fields: ['usuario_id', { attribute: 'created_at', order: 'DESC' }] },
+        { fields: ['categoria', { attribute: 'created_at', order: 'DESC' }] },
+        { fields: ['acao', { attribute: 'created_at', order: 'DESC' }] },
+        { fields: ['recurso', 'recurso_id'] },
+        { fields: ['nivel', { attribute: 'created_at', order: 'DESC' }] },
+        { fields: ['sucesso', { attribute: 'created_at', order: 'DESC' }] },
+        { fields: ['categoria', 'acao', { attribute: 'created_at', order: 'DESC' }] }
+    ]
 });
 
-// Indices para buscas rapidas
-auditLogSchema.index({ createdAt: -1 });
-auditLogSchema.index({ usuarioId: 1, createdAt: -1 });
-auditLogSchema.index({ categoria: 1, createdAt: -1 });
-auditLogSchema.index({ acao: 1, createdAt: -1 });
-auditLogSchema.index({ recurso: 1, recursoId: 1 });
-auditLogSchema.index({ nivel: 1, createdAt: -1 });
-auditLogSchema.index({ sucesso: 1, createdAt: -1 });
-
-// Indice composto para buscas frequentes
-auditLogSchema.index({ categoria: 1, acao: 1, createdAt: -1 });
-
-// TTL Index - remover logs antigos apos 365 dias (configuravel)
-// Comente esta linha se quiser manter logs indefinidamente
-auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
-
-module.exports = mongoose.model('AuditLog', auditLogSchema);
+module.exports = AuditLog;

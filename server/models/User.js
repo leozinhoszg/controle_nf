@@ -1,193 +1,188 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
+    },
     usuario: {
-        type: String,
-        required: [true, 'Nome de usuario e obrigatorio'],
+        type: DataTypes.STRING(30),
+        allowNull: false,
         unique: true,
-        trim: true,
-        lowercase: true,
-        minlength: [3, 'Usuario deve ter no minimo 3 caracteres'],
-        maxlength: [30, 'Usuario deve ter no maximo 30 caracteres']
+        validate: {
+            notEmpty: { msg: 'Nome de usuario e obrigatorio' },
+            len: { args: [3, 30], msg: 'Usuario deve ter no minimo 3 caracteres' }
+        },
+        set(val) {
+            this.setDataValue('usuario', val ? val.toLowerCase().trim() : val);
+        }
     },
     nome: {
-        type: String,
-        trim: true,
-        maxlength: [100, 'Nome deve ter no maximo 100 caracteres']
+        type: DataTypes.STRING(100),
+        defaultValue: null
     },
-    fotoPerfil: {
-        type: String,
-        default: null
+    foto_perfil: {
+        type: DataTypes.TEXT('medium'),
+        defaultValue: null
     },
     email: {
-        type: String,
-        required: [true, 'Email e obrigatorio'],
+        type: DataTypes.STRING(255),
+        allowNull: false,
         unique: true,
-        trim: true,
-        lowercase: true
+        validate: {
+            isEmail: { msg: 'Email invalido' },
+            notEmpty: { msg: 'Email e obrigatorio' }
+        },
+        set(val) {
+            this.setDataValue('email', val ? val.toLowerCase().trim() : val);
+        }
     },
     senha: {
-        type: String,
-        required: false, // Senha nao e obrigatoria na criacao pelo admin
-        minlength: [6, 'Senha deve ter no minimo 6 caracteres'],
-        select: false // Nao retorna senha por padrao nas queries
+        type: DataTypes.STRING(255),
+        defaultValue: null,
+        validate: {
+            len: { args: [6, 255], msg: 'Senha deve ter no minimo 6 caracteres' }
+        }
     },
-    contaAtivada: {
-        type: Boolean,
-        default: false // Usuario criado pelo admin precisa ativar a conta definindo senha
+    conta_ativada: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     },
-    tokenAtivacaoConta: {
-        type: String,
-        select: false
+    token_ativacao_conta: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
     },
-    tokenAtivacaoExpira: {
-        type: Date,
-        select: false
+    token_ativacao_expira: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    perfil: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Perfil',
-        default: null
+    perfil_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        defaultValue: null
     },
     ativo: {
-        type: Boolean,
-        default: true
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
     },
-    emailVerificado: {
-        type: Boolean,
-        default: false
+    email_verificado: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     },
-    tokenVerificacaoEmail: {
-        type: String,
-        select: false
+    token_verificacao_email: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
     },
-    tokenVerificacaoExpira: {
-        type: Date,
-        select: false
+    token_verificacao_expira: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    tokenResetSenha: {
-        type: String,
-        select: false
+    token_reset_senha: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
     },
-    tokenResetExpira: {
-        type: Date,
-        select: false
+    token_reset_expira: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    otpCode: {
-        type: String,
-        select: false
+    otp_code: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
     },
-    otpExpira: {
-        type: Date,
-        select: false
+    otp_expira: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    ultimoLogin: {
-        type: Date
+    ultimo_login: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    tentativasLogin: {
-        type: Number,
-        default: 0
+    tentativas_login: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0
     },
-    bloqueadoAte: {
-        type: Date
+    bloqueado_ate: {
+        type: DataTypes.DATE,
+        defaultValue: null
     }
 }, {
-    timestamps: true
+    tableName: 'users',
+    defaultScope: {
+        attributes: {
+            exclude: ['senha', 'token_verificacao_email', 'token_verificacao_expira',
+                       'token_reset_senha', 'token_reset_expira', 'otp_code', 'otp_expira',
+                       'token_ativacao_conta', 'token_ativacao_expira']
+        }
+    },
+    scopes: {
+        withSenha: {
+            attributes: { exclude: [] }
+        },
+        withTokens: {
+            attributes: { exclude: [] }
+        },
+        withOtp: {
+            attributes: { exclude: [] }
+        },
+        full: {
+            attributes: { exclude: [] }
+        }
+    },
+    hooks: {
+        beforeSave: async (user) => {
+            if (user.changed('senha') && user.senha) {
+                const salt = await bcrypt.genSalt(12);
+                user.senha = await bcrypt.hash(user.senha, salt);
+            }
+        }
+    }
 });
 
-// Pre-save hook para hash da senha
-userSchema.pre('save', async function(next) {
-    if (!this.isModified('senha')) return next();
-
-    const salt = await bcrypt.genSalt(12);
-    this.senha = await bcrypt.hash(this.senha, salt);
-    next();
-});
-
-// Metodo para comparar senhas
-userSchema.methods.compararSenha = async function(senhaInformada) {
+// Instance methods
+User.prototype.compararSenha = async function(senhaInformada) {
     return await bcrypt.compare(senhaInformada, this.senha);
 };
 
-// Metodo para gerar token de verificacao
-userSchema.methods.gerarTokenVerificacao = function() {
+User.prototype.gerarTokenVerificacao = function() {
     const token = crypto.randomBytes(32).toString('hex');
-
-    this.tokenVerificacaoEmail = crypto
-        .createHash('sha256')
-        .update(token)
-        .digest('hex');
-
-    this.tokenVerificacaoExpira = Date.now() + 24 * 60 * 60 * 1000; // 24 horas
-
+    this.token_verificacao_email = crypto.createHash('sha256').update(token).digest('hex');
+    this.token_verificacao_expira = new Date(Date.now() + 24 * 60 * 60 * 1000);
     return token;
 };
 
-// Metodo para gerar token de reset de senha
-userSchema.methods.gerarTokenResetSenha = function() {
+User.prototype.gerarTokenResetSenha = function() {
     const token = crypto.randomBytes(32).toString('hex');
-
-    this.tokenResetSenha = crypto
-        .createHash('sha256')
-        .update(token)
-        .digest('hex');
-
-    this.tokenResetExpira = Date.now() + 60 * 60 * 1000; // 1 hora
-
+    this.token_reset_senha = crypto.createHash('sha256').update(token).digest('hex');
+    this.token_reset_expira = new Date(Date.now() + 60 * 60 * 1000);
     return token;
 };
 
-// Metodo para gerar token de ativacao de conta (novo usuario criado pelo admin)
-userSchema.methods.gerarTokenAtivacaoConta = function() {
+User.prototype.gerarTokenAtivacaoConta = function() {
     const token = crypto.randomBytes(32).toString('hex');
-
-    this.tokenAtivacaoConta = crypto
-        .createHash('sha256')
-        .update(token)
-        .digest('hex');
-
-    this.tokenAtivacaoExpira = Date.now() + 72 * 60 * 60 * 1000; // 72 horas (3 dias)
-
+    this.token_ativacao_conta = crypto.createHash('sha256').update(token).digest('hex');
+    this.token_ativacao_expira = new Date(Date.now() + 72 * 60 * 60 * 1000);
     return token;
 };
 
-// Metodo para gerar codigo OTP de 6 digitos
-userSchema.methods.gerarCodigoOtp = function() {
-    // Gera codigo numerico de 6 digitos
+User.prototype.gerarCodigoOtp = function() {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Armazena hash do OTP por seguranca
-    this.otpCode = crypto
-        .createHash('sha256')
-        .update(otp)
-        .digest('hex');
-
-    this.otpExpira = Date.now() + 15 * 60 * 1000; // 15 minutos
-
+    this.otp_code = crypto.createHash('sha256').update(otp).digest('hex');
+    this.otp_expira = new Date(Date.now() + 15 * 60 * 1000);
     return otp;
 };
 
-// Metodo para verificar codigo OTP
-userSchema.methods.verificarOtp = function(otpInformado) {
-    if (!this.otpCode || !this.otpExpira) {
-        return false;
-    }
-
-    if (Date.now() > this.otpExpira) {
-        return false;
-    }
-
-    const hashOtpInformado = crypto
-        .createHash('sha256')
-        .update(otpInformado)
-        .digest('hex');
-
-    return this.otpCode === hashOtpInformado;
+User.prototype.verificarOtp = function(otpInformado) {
+    if (!this.otp_code || !this.otp_expira) return false;
+    if (Date.now() > new Date(this.otp_expira).getTime()) return false;
+    const hashOtpInformado = crypto.createHash('sha256').update(otpInformado).digest('hex');
+    return this.otp_code === hashOtpInformado;
 };
 
-// Nota: indices para email e usuario ja sao criados automaticamente
-// devido a propriedade unique: true no schema
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

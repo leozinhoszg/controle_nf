@@ -1,25 +1,24 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const fornecedorSchema = new mongoose.Schema({
+const Fornecedor = sequelize.define('Fornecedor', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
+    },
     nome: {
-        type: String,
-        required: [true, 'Nome do fornecedor é obrigatório'],
-        trim: true,
-        uppercase: true
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        validate: {
+            notEmpty: { msg: 'Nome do fornecedor e obrigatorio' }
+        },
+        set(val) {
+            this.setDataValue('nome', val ? val.toUpperCase().trim() : val);
+        }
     }
 }, {
-    timestamps: true
+    tableName: 'fornecedores'
 });
 
-// Virtual para obter contratos do fornecedor
-fornecedorSchema.virtual('contratos', {
-    ref: 'Contrato',
-    localField: '_id',
-    foreignField: 'fornecedor'
-});
-
-// Garantir que virtuals sejam incluídos no JSON
-fornecedorSchema.set('toJSON', { virtuals: true });
-fornecedorSchema.set('toObject', { virtuals: true });
-
-module.exports = mongoose.model('Fornecedor', fornecedorSchema);
+module.exports = Fornecedor;

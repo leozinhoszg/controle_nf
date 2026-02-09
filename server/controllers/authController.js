@@ -1,8 +1,36 @@
 const crypto = require('crypto');
-const { User, RefreshToken } = require('../models');
+const { Op } = require('sequelize');
+const { User, Perfil, PerfilPermissao, RefreshToken } = require('../models');
 const authService = require('../services/authService');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
+
+// Helper para formatar perfil com permissoes do junction table
+const formatPerfilComPermissoes = (perfil) => {
+    if (!perfil) return null;
+    return {
+        id: perfil.id,
+        nome: perfil.nome,
+        isAdmin: perfil.is_admin,
+        permissoes: perfil.permissoesRef ? perfil.permissoesRef.map(p => p.permissao) : []
+    };
+};
+
+// Helper para buscar user com perfil e permissoes
+const findUserWithPerfil = async (where, scope) => {
+    const includeOpts = [
+        {
+            model: Perfil,
+            as: 'perfil',
+            include: [{ model: PerfilPermissao, as: 'permissoesRef' }]
+        }
+    ];
+
+    if (scope) {
+        return User.scope(scope).findOne({ where, include: includeOpts });
+    }
+    return User.findOne({ where, include: includeOpts });
+};
 
 // Registrar novo usuario
 exports.register = async (req, res) => {
@@ -11,7 +39,9 @@ exports.register = async (req, res) => {
 
         // Verificar se usuario ou email ja existem
         const usuarioExistente = await User.findOne({
-            $or: [{ email }, { usuario }]
+            where: {
+                [Op.or]: [{ email }, { usuario }]
+            }
         });
 
         if (usuarioExistente) {
@@ -23,13 +53,13 @@ exports.register = async (req, res) => {
         }
 
         // Criar usuario (sem perfil - admin deve atribuir depois)
-        const user = new User({
+        const user = await User.create({
             usuario,
             email,
             senha,
-            perfil: null,
+            perfil_id: null,
             ativo: true,
-            emailVerificado: false
+            email_verificado: false
         });
 
         // Gerar token de verificacao de email
@@ -46,7 +76,7 @@ exports.register = async (req, res) => {
 
         // Log de auditoria
         await auditService.logAuth(req, 'REGISTRO', `Novo usuario registrado: ${user.usuario}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario,
             metadados: { email: user.email }
         });
@@ -54,10 +84,10 @@ exports.register = async (req, res) => {
         res.status(201).json({
             message: 'Usuario registrado com sucesso. Verifique seu email.',
             user: {
-                id: user._id,
+                id: user.id,
                 usuario: user.usuario,
                 email: user.email,
-                perfil: user.perfil
+                perfil: null
             }
         });
     } catch (error) {
@@ -73,11 +103,18 @@ exports.login = async (req, res) => {
         const userAgent = req.get('User-Agent') || '';
 
         // Buscar usuario com senha e popular perfil
-        const user = await User.findOne({
-            $or: [{ usuario }, { email: usuario }]
-        })
-            .select('+senha +bloqueadoAte +tentativasLogin')
-            .populate('perfil', 'nome permissoes isAdmin');
+        const user = await User.scope('withSenha').findOne({
+            where: {
+                [Op.or]: [{ usuario }, { email: usuario }]
+            },
+            include: [
+                {
+                    model: Perfil,
+                    as: 'perfil',
+                    include: [{ model: PerfilPermissao, as: 'permissoesRef' }]
+                }
+            ]
+        });
 
         if (!user) {
             // Log de tentativa de login com usuario inexistente
@@ -89,11 +126,11 @@ exports.login = async (req, res) => {
         }
 
         // Verificar se conta esta bloqueada
-        if (user.bloqueadoAte && user.bloqueadoAte > Date.now()) {
-            const minutosRestantes = Math.ceil((user.bloqueadoAte - Date.now()) / 60000);
+        if (user.bloqueado_ate && user.bloqueado_ate > Date.now()) {
+            const minutosRestantes = Math.ceil((user.bloqueado_ate - Date.now()) / 60000);
             await auditService.logAuth(req, 'LOGIN_BLOQUEADO', `Tentativa de login em conta bloqueada: ${user.usuario}`, {
                 sucesso: false,
-                usuarioId: user._id,
+                usuarioId: user.id,
                 usuarioNome: user.usuario,
                 nivel: 'WARN',
                 metadados: { minutosRestantes }
@@ -116,24 +153,24 @@ exports.login = async (req, res) => {
 
         if (!senhaCorreta) {
             // Incrementar tentativas de login falhas
-            user.tentativasLogin = (user.tentativasLogin || 0) + 1;
+            user.tentativas_login = (user.tentativas_login || 0) + 1;
 
             // Bloquear apos 5 tentativas
-            if (user.tentativasLogin >= 5) {
-                user.bloqueadoAte = Date.now() + 15 * 60 * 1000; // 15 minutos
-                user.tentativasLogin = 0;
+            if (user.tentativas_login >= 5) {
+                user.bloqueado_ate = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+                user.tentativas_login = 0;
                 await auditService.logAuth(req, 'LOGIN_BLOQUEADO', `Conta bloqueada apos 5 tentativas falhas: ${user.usuario}`, {
                     sucesso: false,
-                    usuarioId: user._id,
+                    usuarioId: user.id,
                     usuarioNome: user.usuario,
                     nivel: 'CRITICAL'
                 });
             } else {
                 await auditService.logAuth(req, 'LOGIN_FALHA', `Senha incorreta para usuario: ${user.usuario}`, {
                     sucesso: false,
-                    usuarioId: user._id,
+                    usuarioId: user.id,
                     usuarioNome: user.usuario,
-                    metadados: { tentativasRestantes: 5 - user.tentativasLogin }
+                    metadados: { tentativasRestantes: 5 - user.tentativas_login }
                 });
             }
 
@@ -147,7 +184,7 @@ exports.login = async (req, res) => {
         }
 
         // Verificar se conta foi ativada (usuario definiu senha)
-        if (!user.contaAtivada && !user.senha) {
+        if (!user.conta_ativada && !user.senha) {
             return res.status(403).json({
                 message: 'Conta nao ativada. Verifique seu email para definir sua senha.',
                 code: 'CONTA_NAO_ATIVADA'
@@ -155,7 +192,7 @@ exports.login = async (req, res) => {
         }
 
         // Verificar se email foi verificado (opcional - pode ser configuravel)
-        if (!user.emailVerificado && process.env.REQUIRE_EMAIL_VERIFICATION === 'true') {
+        if (!user.email_verificado && process.env.REQUIRE_EMAIL_VERIFICATION === 'true') {
             return res.status(403).json({
                 message: 'Email nao verificado. Verifique sua caixa de entrada.',
                 code: 'EMAIL_NOT_VERIFIED'
@@ -163,17 +200,20 @@ exports.login = async (req, res) => {
         }
 
         // Resetar tentativas de login e atualizar ultimo login
-        user.tentativasLogin = 0;
-        user.bloqueadoAte = null;
-        user.ultimoLogin = new Date();
+        user.tentativas_login = 0;
+        user.bloqueado_ate = null;
+        user.ultimo_login = new Date();
         await user.save();
 
         // Gerar tokens
         const tokens = await authService.gerarTokens(user, ipAddress, userAgent);
 
+        // Formatar perfil com permissoes
+        const perfilFormatado = formatPerfilComPermissoes(user.perfil);
+
         // Log de auditoria - login bem-sucedido
         await auditService.logAuth(req, 'LOGIN_SUCESSO', `Login realizado: ${user.usuario}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario,
             metadados: { perfil: user.perfil?.nome }
         });
@@ -181,13 +221,13 @@ exports.login = async (req, res) => {
         res.json({
             message: 'Login realizado com sucesso',
             user: {
-                id: user._id,
+                id: user.id,
                 usuario: user.usuario,
                 nome: user.nome,
                 email: user.email,
-                fotoPerfil: user.fotoPerfil,
-                perfil: user.perfil,
-                emailVerificado: user.emailVerificado
+                fotoPerfil: user.foto_perfil,
+                perfil: perfilFormatado,
+                emailVerificado: user.email_verificado
             },
             ...tokens
         });
@@ -262,23 +302,25 @@ exports.verifyEmail = async (req, res) => {
             .update(token)
             .digest('hex');
 
-        const user = await User.findOne({
-            tokenVerificacaoEmail: hashedToken,
-            tokenVerificacaoExpira: { $gt: Date.now() }
+        const user = await User.scope('withTokens').findOne({
+            where: {
+                token_verificacao_email: hashedToken,
+                token_verificacao_expira: { [Op.gt]: new Date() }
+            }
         });
 
         if (!user) {
             return res.status(400).json({ message: 'Token invalido ou expirado' });
         }
 
-        user.emailVerificado = true;
-        user.tokenVerificacaoEmail = undefined;
-        user.tokenVerificacaoExpira = undefined;
+        user.email_verificado = true;
+        user.token_verificacao_email = null;
+        user.token_verificacao_expira = null;
         await user.save();
 
         // Log de auditoria
         await auditService.logAuth(req, 'EMAIL_VERIFICADO', `Email verificado: ${user.email}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario
         });
 
@@ -293,14 +335,14 @@ exports.resendVerification = async (req, res) => {
     try {
         const { email } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { email } });
 
         if (!user) {
             // Por seguranca, nao revela se email existe
             return res.json({ message: 'Se o email existir, um link de verificacao sera enviado.' });
         }
 
-        if (user.emailVerificado) {
+        if (user.email_verificado) {
             return res.status(400).json({ message: 'Email ja verificado' });
         }
 
@@ -320,7 +362,7 @@ exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { email } });
 
         // Por seguranca, sempre retorna sucesso mesmo se email nao existe
         if (!user) {
@@ -349,7 +391,7 @@ exports.solicitarOtpResetSenha = async (req, res) => {
             return res.status(400).json({ message: 'Email e obrigatorio' });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { email } });
 
         // Por seguranca, sempre retorna sucesso mesmo se email nao existe
         if (!user) {
@@ -379,7 +421,7 @@ exports.solicitarOtpResetSenha = async (req, res) => {
 
         // Log de auditoria
         await auditService.logAuth(req, 'OTP_SOLICITADO', `OTP solicitado para reset de senha: ${user.email}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario,
             nivel: 'WARN'
         });
@@ -411,7 +453,7 @@ exports.verificarOtpResetSenha = async (req, res) => {
         }
 
         // Buscar usuario com campos OTP
-        const user = await User.findOne({ email }).select('+otpCode +otpExpira');
+        const user = await User.scope('withOtp').findOne({ where: { email } });
 
         if (!user) {
             return res.status(400).json({ message: 'Codigo invalido ou expirado' });
@@ -426,15 +468,15 @@ exports.verificarOtpResetSenha = async (req, res) => {
 
         // Atualizar senha
         user.senha = novaSenha;
-        user.otpCode = undefined;
-        user.otpExpira = undefined;
-        user.tentativasLogin = 0;
-        user.bloqueadoAte = null;
+        user.otp_code = null;
+        user.otp_expira = null;
+        user.tentativas_login = 0;
+        user.bloqueado_ate = null;
         await user.save();
 
         // Revogar todos os refresh tokens por seguranca
         const ipAddress = req.ip || req.connection.remoteAddress;
-        await authService.revogarTodosTokens(user._id, ipAddress);
+        await authService.revogarTodosTokens(user.id, ipAddress);
 
         // Enviar email de confirmacao
         try {
@@ -445,7 +487,7 @@ exports.verificarOtpResetSenha = async (req, res) => {
 
         // Log de auditoria
         await auditService.logAuth(req, 'SENHA_RESET', `Senha redefinida via OTP: ${user.usuario}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario,
             nivel: 'CRITICAL'
         });
@@ -471,9 +513,11 @@ exports.ativarConta = async (req, res) => {
             .update(token)
             .digest('hex');
 
-        const user = await User.findOne({
-            tokenAtivacaoConta: hashedToken,
-            tokenAtivacaoExpira: { $gt: Date.now() }
+        const user = await User.scope('withTokens').findOne({
+            where: {
+                token_ativacao_conta: hashedToken,
+                token_ativacao_expira: { [Op.gt]: new Date() }
+            }
         });
 
         if (!user) {
@@ -482,15 +526,15 @@ exports.ativarConta = async (req, res) => {
 
         // Definir senha e ativar conta
         user.senha = senha;
-        user.contaAtivada = true;
-        user.emailVerificado = true; // Email foi verificado ao clicar no link
-        user.tokenAtivacaoConta = undefined;
-        user.tokenAtivacaoExpira = undefined;
+        user.conta_ativada = true;
+        user.email_verificado = true; // Email foi verificado ao clicar no link
+        user.token_ativacao_conta = null;
+        user.token_ativacao_expira = null;
         await user.save();
 
         // Log de auditoria
         await auditService.logAuth(req, 'CONTA_ATIVADA', `Conta ativada: ${user.usuario}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario
         });
 
@@ -511,9 +555,11 @@ exports.resetPassword = async (req, res) => {
             .update(token)
             .digest('hex');
 
-        const user = await User.findOne({
-            tokenResetSenha: hashedToken,
-            tokenResetExpira: { $gt: Date.now() }
+        const user = await User.scope('withTokens').findOne({
+            where: {
+                token_reset_senha: hashedToken,
+                token_reset_expira: { [Op.gt]: new Date() }
+            }
         });
 
         if (!user) {
@@ -522,19 +568,19 @@ exports.resetPassword = async (req, res) => {
 
         // Atualizar senha
         user.senha = senha;
-        user.tokenResetSenha = undefined;
-        user.tokenResetExpira = undefined;
-        user.tentativasLogin = 0;
-        user.bloqueadoAte = null;
+        user.token_reset_senha = null;
+        user.token_reset_expira = null;
+        user.tentativas_login = 0;
+        user.bloqueado_ate = null;
         await user.save();
 
         // Revogar todos os refresh tokens por seguranca
         const ipAddress = req.ip || req.connection.remoteAddress;
-        await authService.revogarTodosTokens(user._id, ipAddress);
+        await authService.revogarTodosTokens(user.id, ipAddress);
 
         // Log de auditoria
         await auditService.logAuth(req, 'SENHA_RESET', `Senha redefinida via token: ${user.usuario}`, {
-            usuarioId: user._id,
+            usuarioId: user.id,
             usuarioNome: user.usuario,
             nivel: 'CRITICAL'
         });
@@ -548,23 +594,30 @@ exports.resetPassword = async (req, res) => {
 // Obter perfil do usuario autenticado
 exports.getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id)
-            .populate('perfil', 'nome permissoes isAdmin');
+        const user = await User.findByPk(req.user.id, {
+            include: [
+                {
+                    model: Perfil,
+                    as: 'perfil',
+                    include: [{ model: PerfilPermissao, as: 'permissoesRef' }]
+                }
+            ]
+        });
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
 
         res.json({
-            id: user._id,
+            id: user.id,
             usuario: user.usuario,
             nome: user.nome,
             email: user.email,
-            fotoPerfil: user.fotoPerfil,
-            perfil: user.perfil,
-            emailVerificado: user.emailVerificado,
-            ultimoLogin: user.ultimoLogin,
-            createdAt: user.createdAt
+            fotoPerfil: user.foto_perfil,
+            perfil: formatPerfilComPermissoes(user.perfil),
+            emailVerificado: user.email_verificado,
+            ultimoLogin: user.ultimo_login,
+            createdAt: user.created_at
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -576,7 +629,7 @@ exports.updateProfile = async (req, res) => {
     try {
         const { nome, email } = req.body;
 
-        const user = await User.findById(req.user.id);
+        const user = await User.findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
@@ -584,7 +637,9 @@ exports.updateProfile = async (req, res) => {
 
         // Verificar se email ja existe em outro usuario
         if (email && email !== user.email) {
-            const emailExiste = await User.findOne({ email, _id: { $ne: user._id } });
+            const emailExiste = await User.findOne({
+                where: { email, id: { [Op.ne]: user.id } }
+            });
             if (emailExiste) {
                 return res.status(400).json({ message: 'Email ja cadastrado' });
             }
@@ -597,19 +652,27 @@ exports.updateProfile = async (req, res) => {
 
         await user.save();
 
-        // Popular perfil para retornar
-        await user.populate('perfil', 'nome permissoes isAdmin');
+        // Recarregar com perfil para retornar
+        const userComPerfil = await User.findByPk(user.id, {
+            include: [
+                {
+                    model: Perfil,
+                    as: 'perfil',
+                    include: [{ model: PerfilPermissao, as: 'permissoesRef' }]
+                }
+            ]
+        });
 
         res.json({
             message: 'Perfil atualizado com sucesso',
             user: {
-                id: user._id,
-                usuario: user.usuario,
-                nome: user.nome,
-                email: user.email,
-                fotoPerfil: user.fotoPerfil,
-                perfil: user.perfil,
-                emailVerificado: user.emailVerificado
+                id: userComPerfil.id,
+                usuario: userComPerfil.usuario,
+                nome: userComPerfil.nome,
+                email: userComPerfil.email,
+                fotoPerfil: userComPerfil.foto_perfil,
+                perfil: formatPerfilComPermissoes(userComPerfil.perfil),
+                emailVerificado: userComPerfil.email_verificado
             }
         });
     } catch (error) {
@@ -622,7 +685,7 @@ exports.updateProfilePhoto = async (req, res) => {
     try {
         const { fotoPerfil } = req.body;
 
-        const user = await User.findById(req.user.id);
+        const user = await User.findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
@@ -633,12 +696,12 @@ exports.updateProfilePhoto = async (req, res) => {
             return res.status(400).json({ message: 'Imagem muito grande. Maximo 500KB.' });
         }
 
-        user.fotoPerfil = fotoPerfil || null;
+        user.foto_perfil = fotoPerfil || null;
         await user.save();
 
         res.json({
             message: 'Foto de perfil atualizada com sucesso',
-            fotoPerfil: user.fotoPerfil
+            fotoPerfil: user.foto_perfil
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -658,7 +721,7 @@ exports.changePassword = async (req, res) => {
             return res.status(400).json({ message: 'Nova senha deve ter no minimo 6 caracteres' });
         }
 
-        const user = await User.findById(req.user.id).select('+senha');
+        const user = await User.scope('withSenha').findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
@@ -697,13 +760,13 @@ exports.getSessions = async (req, res) => {
 // Solicitar OTP para verificacao de email (usuario autenticado)
 exports.solicitarOtpVerificacaoEmail = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = await User.findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
 
-        if (user.emailVerificado) {
+        if (user.email_verificado) {
             return res.status(400).json({ message: 'Email ja verificado' });
         }
 
@@ -738,13 +801,13 @@ exports.verificarOtpEmail = async (req, res) => {
         }
 
         // Buscar usuario com campos OTP
-        const user = await User.findById(req.user.id).select('+otpCode +otpExpira');
+        const user = await User.scope('withOtp').findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario nao encontrado' });
         }
 
-        if (user.emailVerificado) {
+        if (user.email_verificado) {
             return res.status(400).json({ message: 'Email ja verificado' });
         }
 
@@ -756,9 +819,9 @@ exports.verificarOtpEmail = async (req, res) => {
         }
 
         // Marcar email como verificado
-        user.emailVerificado = true;
-        user.otpCode = undefined;
-        user.otpExpira = undefined;
+        user.email_verificado = true;
+        user.otp_code = null;
+        user.otp_expira = null;
         await user.save();
 
         // Log de auditoria

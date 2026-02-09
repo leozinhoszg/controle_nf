@@ -1,39 +1,48 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const sequenciaSchema = new mongoose.Schema({
-    contrato: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contrato',
-        required: [true, 'Contrato é obrigatório']
+const Sequencia = sequelize.define('Sequencia', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
     },
-    'num-seq-item': {
-        type: Number,
-        required: [true, 'Número da sequência é obrigatório']
+    contrato_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
     },
-    diaEmissao: {
-        type: Number,
-        required: [true, 'Dia de emissão é obrigatório'],
-        min: 1,
-        max: 31
+    num_seq_item: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    dia_emissao: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+            min: 1,
+            max: 31
+        }
     },
     valor: {
-        type: Number,
-        required: [true, 'Valor é obrigatório'],
-        min: 0
-    },
-    statusMensal: {
-        type: Map,
-        of: {
-            type: String,
-            enum: ['ok', 'pendente', 'atrasada', 'atualizar_contrato', 'futuro', 'registrada', 'nao_registrada']
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: false,
+        validate: {
+            min: 0
         },
-        default: {}
+        get() {
+            const val = this.getDataValue('valor');
+            return val !== null ? parseFloat(val) : null;
+        }
+    },
+    status_mensal: {
+        type: DataTypes.JSON,
+        defaultValue: {}
     }
 }, {
-    timestamps: true
+    tableName: 'sequencias',
+    indexes: [
+        { fields: ['contrato_id', 'num_seq_item'] }
+    ]
 });
 
-// Índice composto
-sequenciaSchema.index({ contrato: 1, 'num-seq-item': 1 });
-
-module.exports = mongoose.model('Sequencia', sequenciaSchema);
+module.exports = Sequencia;

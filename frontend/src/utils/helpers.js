@@ -62,7 +62,7 @@ export const parseMonthKey = (key) => {
 };
 
 // Calcular status automático
-export const calculateStatus = (diaEmissao, monthKey, lancado = false) => {
+export const calculateStatus = (dia_emissao, monthKey, lancado = false) => {
   if (lancado) return 'ok';
 
   const today = new Date();
@@ -73,7 +73,7 @@ export const calculateStatus = (diaEmissao, monthKey, lancado = false) => {
   }
 
   if (year === today.getFullYear() && month === today.getMonth()) {
-    return today.getDate() < diaEmissao ? 'pendente' : 'atrasada';
+    return today.getDate() < dia_emissao ? 'pendente' : 'atrasada';
   }
 
   return 'atrasada';

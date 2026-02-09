@@ -1,45 +1,38 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const contratoSchema = new mongoose.Schema({
-    fornecedor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Fornecedor',
-        required: [true, 'Fornecedor é obrigatório']
+const Contrato = sequelize.define('Contrato', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
     },
-    'nr-contrato': {
-        type: Number,
-        required: [true, 'Número do contrato é obrigatório']
+    fornecedor_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
     },
-    estabelecimento: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Estabelecimento',
-        required: [true, 'Estabelecimento é obrigatório']
+    nr_contrato: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    'cod-estabel': {
-        type: String,
-        default: '01'
+    estabelecimento_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
+    },
+    cod_estabel: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: '01'
     },
     observacao: {
-        type: String,
-        trim: true,
-        default: ''
+        type: DataTypes.TEXT,
+        defaultValue: ''
     }
 }, {
-    timestamps: true
+    tableName: 'contratos',
+    indexes: [
+        { fields: ['fornecedor_id', 'nr_contrato', 'estabelecimento_id'] }
+    ]
 });
 
-// Virtual para obter sequências do contrato
-contratoSchema.virtual('sequencias', {
-    ref: 'Sequencia',
-    localField: '_id',
-    foreignField: 'contrato'
-});
-
-// Garantir que virtuals sejam incluídos no JSON
-contratoSchema.set('toJSON', { virtuals: true });
-contratoSchema.set('toObject', { virtuals: true });
-
-// Índice composto para evitar duplicatas
-contratoSchema.index({ fornecedor: 1, 'nr-contrato': 1, estabelecimento: 1 });
-
-module.exports = mongoose.model('Contrato', contratoSchema);
+module.exports = Contrato;

@@ -1,15 +1,22 @@
 const { Estabelecimento, Empresa } = require('../models');
 const auditService = require('../services/auditService');
 
+// Include padrao para empresa
+const empresaInclude = [
+    { model: Empresa, as: 'empresa', attributes: ['id', 'cod_empresa', 'nome'] }
+];
+
 // Listar todos os estabelecimentos
 exports.getAll = async (req, res) => {
     try {
         const { empresa } = req.query;
-        const filtro = empresa ? { empresa } : {};
+        const where = empresa ? { empresa_id: empresa } : {};
 
-        const estabelecimentos = await Estabelecimento.find(filtro)
-            .sort({ nome: 1 })
-            .populate('empresa', 'codEmpresa nome');
+        const estabelecimentos = await Estabelecimento.findAll({
+            where,
+            order: [['nome', 'ASC']],
+            include: empresaInclude
+        });
         res.json(estabelecimentos);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -19,8 +26,9 @@ exports.getAll = async (req, res) => {
 // Buscar estabelecimento por ID
 exports.getById = async (req, res) => {
     try {
-        const estabelecimento = await Estabelecimento.findById(req.params.id)
-            .populate('empresa', 'codEmpresa nome');
+        const estabelecimento = await Estabelecimento.findByPk(req.params.id, {
+            include: empresaInclude
+        });
         if (!estabelecimento) {
             return res.status(404).json({ message: 'Estabelecimento nao encontrado' });
         }
@@ -34,29 +42,29 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         // Verificar se a empresa existe
-        const empresa = await Empresa.findById(req.body.empresa);
+        const empresa = await Empresa.findByPk(req.body.empresa);
         if (!empresa) {
             return res.status(400).json({ message: 'Empresa nao encontrada' });
         }
 
-        const estabelecimento = new Estabelecimento({
-            empresa: req.body.empresa,
-            codEstabel: req.body.codEstabel,
+        const novoEstabelecimento = await Estabelecimento.create({
+            empresa_id: req.body.empresa,
+            cod_estabel: req.body.cod_estabel,
             nome: req.body.nome,
             ativo: req.body.ativo !== undefined ? req.body.ativo : true
         });
-        const novoEstabelecimento = await estabelecimento.save();
 
-        // Buscar com populate para retornar dados completos
-        const estabelecimentoCompleto = await Estabelecimento.findById(novoEstabelecimento._id)
-            .populate('empresa', 'codEmpresa nome');
+        // Buscar com include para retornar dados completos
+        const estabelecimentoCompleto = await Estabelecimento.findByPk(novoEstabelecimento.id, {
+            include: empresaInclude
+        });
 
         // Log de auditoria
         await auditService.logCrud(req, 'CRIAR', 'ESTABELECIMENTO', 'Estabelecimento', {
-            recursoId: novoEstabelecimento._id,
+            recursoId: novoEstabelecimento.id,
             recursoNome: novoEstabelecimento.nome,
-            descricao: `Estabelecimento criado: ${novoEstabelecimento.nome} (${novoEstabelecimento.codEstabel}) - Empresa: ${empresa.nome}`,
-            dadosNovos: { codEstabel: novoEstabelecimento.codEstabel, nome: novoEstabelecimento.nome, empresa: empresa.nome }
+            descricao: `Estabelecimento criado: ${novoEstabelecimento.nome} (${novoEstabelecimento.cod_estabel}) - Empresa: ${empresa.nome}`,
+            dadosNovos: { cod_estabel: novoEstabelecimento.cod_estabel, nome: novoEstabelecimento.nome, empresa: empresa.nome }
         });
 
         res.status(201).json(estabelecimentoCompleto);
@@ -68,44 +76,48 @@ exports.create = async (req, res) => {
 // Atualizar estabelecimento
 exports.update = async (req, res) => {
     try {
-        const estabelecimentoAnterior = await Estabelecimento.findById(req.params.id)
-            .populate('empresa', 'codEmpresa nome');
+        const estabelecimentoAnterior = await Estabelecimento.findByPk(req.params.id, {
+            include: empresaInclude
+        });
         if (!estabelecimentoAnterior) {
             return res.status(404).json({ message: 'Estabelecimento nao encontrado' });
         }
 
         // Se estiver mudando a empresa, verificar se a nova empresa existe
-        if (req.body.empresa && req.body.empresa !== estabelecimentoAnterior.empresa.toString()) {
-            const empresa = await Empresa.findById(req.body.empresa);
+        if (req.body.empresa && req.body.empresa !== String(estabelecimentoAnterior.empresa_id)) {
+            const empresa = await Empresa.findByPk(req.body.empresa);
             if (!empresa) {
                 return res.status(400).json({ message: 'Empresa nao encontrada' });
             }
         }
 
-        const estabelecimento = await Estabelecimento.findByIdAndUpdate(
-            req.params.id,
+        await Estabelecimento.update(
             {
-                empresa: req.body.empresa,
-                codEstabel: req.body.codEstabel,
+                empresa_id: req.body.empresa,
+                cod_estabel: req.body.cod_estabel,
                 nome: req.body.nome,
                 ativo: req.body.ativo
             },
-            { new: true, runValidators: true }
-        ).populate('empresa', 'codEmpresa nome');
+            { where: { id: req.params.id } }
+        );
+
+        const estabelecimento = await Estabelecimento.findByPk(req.params.id, {
+            include: empresaInclude
+        });
 
         // Log de auditoria
         await auditService.logCrud(req, 'ATUALIZAR', 'ESTABELECIMENTO', 'Estabelecimento', {
-            recursoId: estabelecimento._id,
+            recursoId: estabelecimento.id,
             recursoNome: estabelecimento.nome,
             descricao: `Estabelecimento atualizado: ${estabelecimento.nome}`,
             dadosAnteriores: {
-                codEstabel: estabelecimentoAnterior.codEstabel,
+                cod_estabel: estabelecimentoAnterior.cod_estabel,
                 nome: estabelecimentoAnterior.nome,
                 empresa: estabelecimentoAnterior.empresa?.nome,
                 ativo: estabelecimentoAnterior.ativo
             },
             dadosNovos: {
-                codEstabel: estabelecimento.codEstabel,
+                cod_estabel: estabelecimento.cod_estabel,
                 nome: estabelecimento.nome,
                 empresa: estabelecimento.empresa?.nome,
                 ativo: estabelecimento.ativo
@@ -121,20 +133,21 @@ exports.update = async (req, res) => {
 // Excluir estabelecimento
 exports.delete = async (req, res) => {
     try {
-        const estabelecimento = await Estabelecimento.findById(req.params.id)
-            .populate('empresa', 'codEmpresa nome');
+        const estabelecimento = await Estabelecimento.findByPk(req.params.id, {
+            include: empresaInclude
+        });
         if (!estabelecimento) {
             return res.status(404).json({ message: 'Estabelecimento nao encontrado' });
         }
 
-        await Estabelecimento.findByIdAndDelete(req.params.id);
+        await Estabelecimento.destroy({ where: { id: req.params.id } });
 
         // Log de auditoria
         await auditService.logCrud(req, 'EXCLUIR', 'ESTABELECIMENTO', 'Estabelecimento', {
             recursoId: req.params.id,
             recursoNome: estabelecimento.nome,
             descricao: `Estabelecimento excluido: ${estabelecimento.nome} - Empresa: ${estabelecimento.empresa?.nome}`,
-            dadosAnteriores: { codEstabel: estabelecimento.codEstabel, nome: estabelecimento.nome, empresa: estabelecimento.empresa?.nome },
+            dadosAnteriores: { cod_estabel: estabelecimento.cod_estabel, nome: estabelecimento.nome, empresa: estabelecimento.empresa?.nome },
             nivel: 'WARN'
         });
 

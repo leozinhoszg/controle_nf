@@ -9,14 +9,14 @@ import Toast from '../components/ui/Toast';
 
 const initialContratoForm = {
   fornecedor: '',
-  'nr-contrato': '',
+  nr_contrato: '',
   estabelecimento: '',
   observacao: ''
 };
 
 const initialSequenciaForm = {
-  'num-seq-item': '',
-  diaEmissao: '',
+  num_seq_item: '',
+  dia_emissao: '',
   valor: ''
 };
 
@@ -70,10 +70,10 @@ export default function Contratos() {
       const sequenciasMap = {};
       for (const contrato of contratosRes.data || []) {
         try {
-          const seqRes = await sequenciasAPI.listarPorContrato(contrato._id);
-          sequenciasMap[contrato._id] = seqRes.data || [];
+          const seqRes = await sequenciasAPI.listarPorContrato(contrato.id);
+          sequenciasMap[contrato.id] = seqRes.data || [];
         } catch {
-          sequenciasMap[contrato._id] = [];
+          sequenciasMap[contrato.id] = [];
         }
       }
       setSequenciasPorContrato(sequenciasMap);
@@ -90,12 +90,12 @@ export default function Contratos() {
     const map = new Map();
 
     contratos.forEach(contrato => {
-      const fornecedorId = contrato.fornecedor?._id || contrato.fornecedor;
+      const fornecedorId = contrato.fornecedor?.id || contrato.fornecedor;
       const fornecedorNome = contrato.fornecedor?.nome || 'Sem Fornecedor';
 
       if (!map.has(fornecedorId)) {
         map.set(fornecedorId, {
-          _id: fornecedorId,
+          id: fornecedorId,
           nome: fornecedorNome,
           contratos: []
         });
@@ -135,12 +135,12 @@ export default function Contratos() {
 
   const openEditContratoModal = (contrato) => {
     setContratoForm({
-      fornecedor: contrato.fornecedor?._id || contrato.fornecedor || '',
-      'nr-contrato': contrato['nr-contrato'] || '',
-      estabelecimento: contrato.estabelecimento?._id || contrato.estabelecimento || '',
+      fornecedor: contrato.fornecedor?.id || contrato.fornecedor || '',
+      nr_contrato: contrato.nr_contrato || '',
+      estabelecimento: contrato.estabelecimento?.id || contrato.estabelecimento || '',
       observacao: contrato.observacao || ''
     });
-    setEditingContratoId(contrato._id);
+    setEditingContratoId(contrato.id);
     setIsContratoModalOpen(true);
   };
 
@@ -154,7 +154,7 @@ export default function Contratos() {
       showToast('Selecione um fornecedor', 'warning');
       return;
     }
-    if (!contratoForm['nr-contrato']) {
+    if (!contratoForm.nr_contrato) {
       showToast('Número do contrato é obrigatório', 'warning');
       return;
     }
@@ -168,7 +168,7 @@ export default function Contratos() {
 
       const dados = {
         fornecedor: contratoForm.fornecedor,
-        'nr-contrato': parseInt(contratoForm['nr-contrato']),
+        nr_contrato: parseInt(contratoForm.nr_contrato),
         estabelecimento: contratoForm.estabelecimento,
         observacao: contratoForm.observacao
       };
@@ -214,11 +214,11 @@ export default function Contratos() {
   const openEditSequenciaModal = (sequencia, contrato) => {
     setSelectedContrato(contrato);
     setSequenciaForm({
-      'num-seq-item': sequencia['num-seq-item'] || '',
-      diaEmissao: sequencia.diaEmissao || '',
+      num_seq_item: sequencia.num_seq_item || '',
+      dia_emissao: sequencia.dia_emissao || '',
       valor: sequencia.valor || ''
     });
-    setEditingSequenciaId(sequencia._id);
+    setEditingSequenciaId(sequencia.id);
     setIsSequenciaModalOpen(true);
   };
 
@@ -228,11 +228,11 @@ export default function Contratos() {
   };
 
   const handleSequenciaSubmit = async () => {
-    if (!sequenciaForm['num-seq-item']) {
+    if (!sequenciaForm.num_seq_item) {
       showToast('Número da sequência é obrigatório', 'warning');
       return;
     }
-    if (!sequenciaForm.diaEmissao) {
+    if (!sequenciaForm.dia_emissao) {
       showToast('Dia de emissão é obrigatório', 'warning');
       return;
     }
@@ -245,9 +245,9 @@ export default function Contratos() {
       setSaving(true);
 
       const dados = {
-        contrato: selectedContrato._id,
-        'num-seq-item': parseInt(sequenciaForm['num-seq-item']),
-        diaEmissao: parseInt(sequenciaForm.diaEmissao),
+        contrato: selectedContrato.id,
+        num_seq_item: parseInt(sequenciaForm.num_seq_item),
+        dia_emissao: parseInt(sequenciaForm.dia_emissao),
         valor: parseFloat(sequenciaForm.valor)
       };
 
@@ -284,7 +284,7 @@ export default function Contratos() {
   const estabelecimentosPorEmpresa = useMemo(() => {
     const map = new Map();
     estabelecimentos.forEach(estab => {
-      const empresaId = estab.empresa?._id || 'sem-empresa';
+      const empresaId = estab.empresa?.id || 'sem-empresa';
       const empresaNome = estab.empresa?.nome || 'Sem Empresa';
       if (!map.has(empresaId)) {
         map.set(empresaId, { nome: empresaNome, estabelecimentos: [] });
@@ -479,7 +479,7 @@ export default function Contratos() {
           <div className="space-y-5">
             {contratosPorFornecedor.map((fornecedor, fIdx) => (
               <div
-                key={fornecedor._id}
+                key={fornecedor.id}
                 className="glass-card glass-card-hover overflow-hidden"
                 style={{
                   animation: 'fadeInUp 0.4s ease forwards',
@@ -505,15 +505,15 @@ export default function Contratos() {
                 {/* Contratos do Fornecedor */}
                 <div className="divide-y divide-base-200/20">
                   {fornecedor.contratos.map((contrato) => {
-                    const sequencias = sequenciasPorContrato[contrato._id] || [];
-                    const isExpanded = expandedContratos.has(contrato._id);
+                    const sequencias = sequenciasPorContrato[contrato.id] || [];
+                    const isExpanded = expandedContratos.has(contrato.id);
 
                     return (
-                      <div key={contrato._id}>
+                      <div key={contrato.id}>
                         {/* Header do Contrato */}
                         <div
                           className="flex items-center justify-between px-6 py-3.5 hover:bg-base-200/20 cursor-pointer transition-colors"
-                          onClick={() => toggleContrato(contrato._id)}
+                          onClick={() => toggleContrato(contrato.id)}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <svg
@@ -527,13 +527,13 @@ export default function Contratos() {
                             </svg>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-sm">Contrato {contrato['nr-contrato']}</span>
+                                <span className="font-semibold text-sm">Contrato {contrato.nr_contrato}</span>
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-base-300/30 text-base-content/50">
                                   {sequencias.length} seq.
                                 </span>
                               </div>
                               <p className="text-xs text-base-content/45 mt-0.5 truncate">
-                                {contrato.estabelecimento?.empresa?.nome} - {contrato.estabelecimento?.nome} ({contrato['cod-estabel']})
+                                {contrato.estabelecimento?.empresa?.nome} - {contrato.estabelecimento?.nome} ({contrato.cod_estabel})
                               </p>
                               {contrato.observacao && (
                                 <p className="text-xs text-base-content/35 mt-0.5 italic truncate">{contrato.observacao}</p>
@@ -564,7 +564,7 @@ export default function Contratos() {
                             </button>
                             <button
                               className="btn btn-xs btn-ghost btn-square opacity-60 hover:opacity-100 text-error hover:bg-error/10 transition-all"
-                              onClick={() => openDeleteContratoDialog(contrato._id)}
+                              onClick={() => openDeleteContratoDialog(contrato.id)}
                               title="Excluir Contrato"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -589,7 +589,7 @@ export default function Contratos() {
                               <tbody>
                                 {sequencias.map((seq, sIdx) => (
                                   <tr
-                                    key={seq._id}
+                                    key={seq.id}
                                     className="hover:bg-base-200/30"
                                     style={{
                                       animation: 'fadeInUp 0.25s ease forwards',
@@ -600,16 +600,16 @@ export default function Contratos() {
                                     <td className="pl-14">
                                       <div className="flex items-center gap-2">
                                         <div className="w-6 h-6 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
-                                          <span className="text-xs font-bold text-warning">{seq['num-seq-item']}</span>
+                                          <span className="text-xs font-bold text-warning">{seq.num_seq_item}</span>
                                         </div>
                                         <span className="text-sm text-base-content/70 font-medium">
-                                          Seq. {seq['num-seq-item']}
+                                          Seq. {seq.num_seq_item}
                                         </span>
                                       </div>
                                     </td>
                                     <td className="text-center">
                                       <span className="text-xs px-2 py-0.5 rounded-full bg-base-300/30 text-base-content/60">
-                                        Dia {seq.diaEmissao}
+                                        Dia {seq.dia_emissao}
                                       </span>
                                     </td>
                                     <td className="text-right text-sm font-medium text-base-content/70">
@@ -628,7 +628,7 @@ export default function Contratos() {
                                         </button>
                                         <button
                                           className="btn btn-xs btn-ghost btn-square opacity-60 hover:opacity-100 text-error hover:bg-error/10 transition-all"
-                                          onClick={() => openDeleteSequenciaDialog(seq._id)}
+                                          onClick={() => openDeleteSequenciaDialog(seq.id)}
                                           title="Excluir Sequência"
                                         >
                                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -703,7 +703,7 @@ export default function Contratos() {
               >
                 <option value="">Selecione um fornecedor</option>
                 {fornecedores.map(f => (
-                  <option key={f._id} value={f._id}>{f.nome}</option>
+                  <option key={f.id} value={f.id}>{f.nome}</option>
                 ))}
               </select>
             </FormField>
@@ -712,8 +712,8 @@ export default function Contratos() {
               <input
                 type="number"
                 className="input input-bordered w-full"
-                value={contratoForm['nr-contrato']}
-                onChange={(e) => setContratoForm(prev => ({ ...prev, 'nr-contrato': e.target.value }))}
+                value={contratoForm.nr_contrato}
+                onChange={(e) => setContratoForm(prev => ({ ...prev, nr_contrato: e.target.value }))}
                 placeholder="Ex: 757"
               />
             </FormField>
@@ -729,8 +729,8 @@ export default function Contratos() {
               {estabelecimentosPorEmpresa.map(grupo => (
                 <optgroup key={grupo.nome} label={grupo.nome}>
                   {grupo.estabelecimentos.map(estab => (
-                    <option key={estab._id} value={estab._id}>
-                      {estab.codEstabel} - {estab.nome}
+                    <option key={estab.id} value={estab.id}>
+                      {estab.cod_estabel} - {estab.nome}
                     </option>
                   ))}
                 </optgroup>
@@ -776,10 +776,10 @@ export default function Contratos() {
                 type="text"
                 inputMode="numeric"
                 className="input input-bordered w-full"
-                value={sequenciaForm['num-seq-item']}
+                value={sequenciaForm.num_seq_item}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '');
-                  setSequenciaForm(prev => ({ ...prev, 'num-seq-item': val }));
+                  setSequenciaForm(prev => ({ ...prev, num_seq_item: val }));
                 }}
                 placeholder="Ex: 1"
               />
@@ -787,8 +787,8 @@ export default function Contratos() {
 
             <FormField label="Dia de Emissão" required>
               <DayPicker
-                value={sequenciaForm.diaEmissao}
-                onChange={(day) => setSequenciaForm(prev => ({ ...prev, diaEmissao: day }))}
+                value={sequenciaForm.dia_emissao}
+                onChange={(day) => setSequenciaForm(prev => ({ ...prev, dia_emissao: day }))}
                 placeholder="Selecione o dia"
               />
             </FormField>

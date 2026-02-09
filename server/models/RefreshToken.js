@@ -1,57 +1,69 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const refreshTokenSchema = new mongoose.Schema({
+const RefreshToken = sequelize.define('RefreshToken', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
+    },
     token: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING(255),
+        allowNull: false,
         unique: true
     },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+    user_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
     },
-    expiresAt: {
-        type: Date,
-        required: true
+    expires_at: {
+        type: DataTypes.DATE,
+        allowNull: false
     },
-    createdByIp: {
-        type: String
+    created_by_ip: {
+        type: DataTypes.STRING(45),
+        defaultValue: null
     },
     revoked: {
-        type: Date
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    revokedByIp: {
-        type: String
+    revoked_by_ip: {
+        type: DataTypes.STRING(45),
+        defaultValue: null
     },
-    replacedByToken: {
-        type: String
+    replaced_by_token: {
+        type: DataTypes.STRING(255),
+        defaultValue: null
     },
-    userAgent: {
-        type: String
+    user_agent: {
+        type: DataTypes.STRING(500),
+        defaultValue: null
+    },
+    is_expired: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            return Date.now() >= new Date(this.expires_at).getTime();
+        }
+    },
+    is_revoked: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            return this.revoked != null;
+        }
+    },
+    is_active: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            return !this.is_revoked && !this.is_expired;
+        }
     }
 }, {
-    timestamps: true
+    tableName: 'refresh_tokens',
+    indexes: [
+        { fields: ['user_id'] },
+        { fields: ['expires_at'] }
+    ]
 });
 
-// Metodo virtual para verificar se token expirou
-refreshTokenSchema.virtual('isExpired').get(function() {
-    return Date.now() >= this.expiresAt;
-});
-
-// Metodo virtual para verificar se token foi revogado
-refreshTokenSchema.virtual('isRevoked').get(function() {
-    return this.revoked != null;
-});
-
-// Metodo virtual para verificar se token esta ativo
-refreshTokenSchema.virtual('isActive').get(function() {
-    return !this.isRevoked && !this.isExpired;
-});
-
-// Indices para performance e limpeza
-// Nota: indice para token ja e criado automaticamente devido a unique: true
-refreshTokenSchema.index({ user: 1 });
-refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-module.exports = mongoose.model('RefreshToken', refreshTokenSchema);
+module.exports = RefreshToken;

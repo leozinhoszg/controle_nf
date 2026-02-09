@@ -1,103 +1,120 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-// Modelo para armazenar medições da API do ERP (Datasul)
-// Campos mapeados diretamente da API: http://192.168.69.213:8080/api/cnp/v1/medicoes
-const medicaoSchema = new mongoose.Schema({
-    // Referência à sequência do nosso sistema
-    sequencia: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Sequencia',
-        required: true
+const Medicao = sequelize.define('Medicao', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
     },
-    // Campos da API ERP (mantidos com mesmos nomes para compatibilidade)
-    'num-seq-medicao': {
-        type: Number,
-        required: true
+    sequencia_id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
     },
-    'cod-estabel': {
-        type: String,
-        required: true
+    num_seq_medicao: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    'serie-nota': {
-        type: String,
-        default: ''
+    cod_estabel: {
+        type: DataTypes.STRING(10),
+        allowNull: false
     },
-    'sld-val-medicao': {
-        type: Number,
-        default: 0
+    serie_nota: {
+        type: DataTypes.STRING(50),
+        defaultValue: ''
     },
-    'num-seq-item': {
-        type: Number,
-        required: true
+    sld_val_medicao: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+        get() {
+            const val = this.getDataValue('sld_val_medicao');
+            return val !== null ? parseFloat(val) : 0;
+        }
     },
-    'numero-ordem': {
-        type: Number,
-        default: 0
+    num_seq_item: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    'val-medicao': {
-        type: Number,
-        required: true
+    numero_ordem: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     },
-    'dat-medicao': {
-        type: Date,
-        required: true
+    val_medicao: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: false,
+        get() {
+            const val = this.getDataValue('val_medicao');
+            return val !== null ? parseFloat(val) : null;
+        }
     },
-    'sld-rec-medicao': {
-        type: Number,
-        default: 0
+    dat_medicao: {
+        type: DataTypes.DATE,
+        allowNull: false
     },
-    'nr-contrato': {
-        type: Number,
-        required: true
+    sld_rec_medicao: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+        get() {
+            const val = this.getDataValue('sld_rec_medicao');
+            return val !== null ? parseFloat(val) : 0;
+        }
     },
-    'dat-prev-medicao': {
-        type: Date
+    nr_contrato: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    'numero-nota': {
-        type: String,
-        default: ''
+    dat_prev_medicao: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    'nome-emit': {
-        type: String,
-        default: ''
+    numero_nota: {
+        type: DataTypes.STRING(50),
+        defaultValue: ''
     },
-    'dat-receb': {
-        type: Date
+    nome_emit: {
+        type: DataTypes.STRING(255),
+        defaultValue: ''
     },
-    'responsavel': {
-        type: String,
-        default: ''
+    dat_receb: {
+        type: DataTypes.DATE,
+        defaultValue: null
     },
-    // Campos adicionais do nosso sistema
-    mesReferencia: {
-        type: String,
-        required: true
+    responsavel: {
+        type: DataTypes.STRING(255),
+        defaultValue: ''
     },
-    statusRegistro: {
-        type: String,
-        enum: ['registrada', 'nao_registrada', 'pendente'],
-        default: 'pendente'
+    mes_referencia: {
+        type: DataTypes.STRING(7),
+        allowNull: false
     },
-    alertaValor: {
-        type: Boolean,
-        default: false
+    status_registro: {
+        type: DataTypes.ENUM('registrada', 'nao_registrada', 'pendente'),
+        allowNull: false,
+        defaultValue: 'pendente'
     },
-    diferencaValor: {
-        type: Number,
-        default: 0
+    alerta_valor: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     },
-    sincronizadoEm: {
-        type: Date,
-        default: Date.now
+    diferenca_valor: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+        get() {
+            const val = this.getDataValue('diferenca_valor');
+            return val !== null ? parseFloat(val) : 0;
+        }
+    },
+    sincronizado_em: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
     }
 }, {
-    timestamps: true
+    tableName: 'medicoes',
+    indexes: [
+        { unique: true, fields: ['nr_contrato', 'cod_estabel', 'num_seq_item', 'num_seq_medicao'] },
+        { fields: ['sequencia_id', 'mes_referencia'] }
+    ]
 });
 
-// Índice composto para evitar duplicatas de medições
-medicaoSchema.index({ 'nr-contrato': 1, 'cod-estabel': 1, 'num-seq-item': 1, 'num-seq-medicao': 1 }, { unique: true });
-
-// Índice para busca por sequência e mês
-medicaoSchema.index({ sequencia: 1, mesReferencia: 1 });
-
-module.exports = mongoose.model('Medicao', medicaoSchema);
+module.exports = Medicao;

@@ -1,38 +1,31 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const empresaSchema = new mongoose.Schema({
-    codEmpresa: {
-        type: String,
-        required: [true, 'Código da empresa é obrigatório'],
-        unique: true,
-        trim: true
+const Empresa = sequelize.define('Empresa', {
+    id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    cod_empresa: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        unique: true
     },
     nome: {
-        type: String,
-        required: [true, 'Nome da empresa é obrigatório'],
-        trim: true,
-        uppercase: true
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        set(val) {
+            this.setDataValue('nome', val ? val.toUpperCase().trim() : val);
+        }
     },
     ativo: {
-        type: Boolean,
-        default: true
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
     }
 }, {
-    timestamps: true
+    tableName: 'empresas'
 });
 
-// Virtual para obter estabelecimentos da empresa
-empresaSchema.virtual('estabelecimentos', {
-    ref: 'Estabelecimento',
-    localField: '_id',
-    foreignField: 'empresa'
-});
-
-// Garantir que virtuals sejam incluídos no JSON
-empresaSchema.set('toJSON', { virtuals: true });
-empresaSchema.set('toObject', { virtuals: true });
-
-// Index para busca por código
-empresaSchema.index({ codEmpresa: 1 });
-
-module.exports = mongoose.model('Empresa', empresaSchema);
+module.exports = Empresa;

@@ -1,10 +1,11 @@
+const { Op } = require('sequelize');
 const { Fornecedor, Contrato, Sequencia } = require('../models');
 const auditService = require('../services/auditService');
 
 // Listar todos os fornecedores
 exports.getAll = async (req, res) => {
     try {
-        const fornecedores = await Fornecedor.find().sort({ nome: 1 });
+        const fornecedores = await Fornecedor.findAll({ order: [['nome', 'ASC']] });
         res.json(fornecedores);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -14,7 +15,7 @@ exports.getAll = async (req, res) => {
 // Buscar fornecedor por ID
 exports.getById = async (req, res) => {
     try {
-        const fornecedor = await Fornecedor.findById(req.params.id);
+        const fornecedor = await Fornecedor.findByPk(req.params.id);
         if (!fornecedor) {
             return res.status(404).json({ message: 'Fornecedor nao encontrado' });
         }
@@ -27,14 +28,13 @@ exports.getById = async (req, res) => {
 // Criar novo fornecedor
 exports.create = async (req, res) => {
     try {
-        const fornecedor = new Fornecedor({
+        const novoFornecedor = await Fornecedor.create({
             nome: req.body.nome
         });
-        const novoFornecedor = await fornecedor.save();
 
         // Log de auditoria
         await auditService.logCrud(req, 'CRIAR', 'FORNECEDOR', 'Fornecedor', {
-            recursoId: novoFornecedor._id,
+            recursoId: novoFornecedor.id,
             recursoNome: novoFornecedor.nome,
             descricao: `Fornecedor criado: ${novoFornecedor.nome}`,
             dadosNovos: { nome: novoFornecedor.nome }
@@ -50,20 +50,21 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         // Buscar dados anteriores para auditoria
-        const fornecedorAnterior = await Fornecedor.findById(req.params.id);
+        const fornecedorAnterior = await Fornecedor.findByPk(req.params.id);
         if (!fornecedorAnterior) {
             return res.status(404).json({ message: 'Fornecedor nao encontrado' });
         }
 
-        const fornecedor = await Fornecedor.findByIdAndUpdate(
-            req.params.id,
+        await Fornecedor.update(
             { nome: req.body.nome },
-            { new: true, runValidators: true }
+            { where: { id: req.params.id } }
         );
+
+        const fornecedor = await Fornecedor.findByPk(req.params.id);
 
         // Log de auditoria
         await auditService.logCrud(req, 'ATUALIZAR', 'FORNECEDOR', 'Fornecedor', {
-            recursoId: fornecedor._id,
+            recursoId: fornecedor.id,
             recursoNome: fornecedor.nome,
             descricao: `Fornecedor atualizado: ${fornecedor.nome}`,
             dadosAnteriores: { nome: fornecedorAnterior.nome },
@@ -79,23 +80,25 @@ exports.update = async (req, res) => {
 // Excluir fornecedor (cascata)
 exports.delete = async (req, res) => {
     try {
-        const fornecedor = await Fornecedor.findById(req.params.id);
+        const fornecedor = await Fornecedor.findByPk(req.params.id);
         if (!fornecedor) {
             return res.status(404).json({ message: 'Fornecedor nao encontrado' });
         }
 
         // Buscar contratos do fornecedor
-        const contratos = await Contrato.find({ fornecedor: req.params.id });
-        const contratoIds = contratos.map(c => c._id);
+        const contratos = await Contrato.findAll({ where: { fornecedor_id: req.params.id } });
+        const contratoIds = contratos.map(c => c.id);
 
         // Excluir sequencias dos contratos
-        await Sequencia.deleteMany({ contrato: { $in: contratoIds } });
+        if (contratoIds.length > 0) {
+            await Sequencia.destroy({ where: { contrato_id: { [Op.in]: contratoIds } } });
+        }
 
         // Excluir contratos
-        await Contrato.deleteMany({ fornecedor: req.params.id });
+        await Contrato.destroy({ where: { fornecedor_id: req.params.id } });
 
         // Excluir fornecedor
-        await Fornecedor.findByIdAndDelete(req.params.id);
+        await Fornecedor.destroy({ where: { id: req.params.id } });
 
         // Log de auditoria
         await auditService.logCrud(req, 'EXCLUIR', 'FORNECEDOR', 'Fornecedor', {

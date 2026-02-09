@@ -1,8 +1,18 @@
-const { Medicao, Sequencia, Contrato } = require('../models');
+const { Op } = require('sequelize');
+const { Medicao, Sequencia, Contrato, Fornecedor } = require('../models');
 const medicaoService = require('../services/medicaoService');
 const auditService = require('../services/auditService');
 
-// Listar medições de uma sequência
+// Include para sequencia com contrato e fornecedor
+const sequenciaFullInclude = [
+    {
+        model: Contrato,
+        as: 'contrato',
+        include: [{ model: Fornecedor, as: 'fornecedor' }]
+    }
+];
+
+// Listar medicoes de uma sequencia
 exports.getBySequencia = async (req, res) => {
     try {
         const { sequenciaId } = req.params;
@@ -13,14 +23,14 @@ exports.getBySequencia = async (req, res) => {
     }
 };
 
-// Buscar medições por parâmetros (contrato, estabelecimento, sequência)
+// Buscar medicoes por parametros (contrato, estabelecimento, sequencia)
 exports.buscar = async (req, res) => {
     try {
         const { contrato, estabelecimento, sequencia } = req.query;
 
         if (!contrato || !estabelecimento || !sequencia) {
             return res.status(400).json({
-                message: 'Parâmetros obrigatórios: contrato, estabelecimento, sequencia',
+                message: 'Parametros obrigatorios: contrato, estabelecimento, sequencia',
                 exemplo: '/api/medicoes/buscar?contrato=369&estabelecimento=01&sequencia=1'
             });
         }
@@ -32,27 +42,29 @@ exports.buscar = async (req, res) => {
             parseInt(sequencia)
         );
 
-        // Se não houver dados locais, busca da API e sincroniza
+        // Se nao houver dados locais, busca da API e sincroniza
         if (medicoes.length === 0) {
-            // Buscar a sequência correspondente
+            // Buscar a sequencia correspondente
             const contratoDoc = await Contrato.findOne({
-                'nr-contrato': parseInt(contrato),
-                'cod-estabel': estabelecimento
+                where: {
+                    nr_contrato: parseInt(contrato),
+                    cod_estabel: estabelecimento
+                }
             });
 
             if (contratoDoc) {
                 const sequenciaDoc = await Sequencia.findOne({
-                    contrato: contratoDoc._id,
-                    'num-seq-item': parseInt(sequencia)
-                }).populate({
-                    path: 'contrato',
-                    populate: { path: 'fornecedor' }
+                    where: {
+                        contrato_id: contratoDoc.id,
+                        num_seq_item: parseInt(sequencia)
+                    },
+                    include: sequenciaFullInclude
                 });
 
                 if (sequenciaDoc) {
                     try {
                         medicoes = await medicaoService.sincronizarMedicoes(sequenciaDoc);
-                        await medicaoService.atualizarStatusMensal(sequenciaDoc._id);
+                        await medicaoService.atualizarStatusMensal(sequenciaDoc.id);
                     } catch (syncError) {
                         console.error('Erro ao sincronizar:', syncError.message);
                     }
@@ -70,19 +82,17 @@ exports.buscar = async (req, res) => {
     }
 };
 
-// Sincronizar medições de uma sequência específica com a API do ERP
+// Sincronizar medicoes de uma sequencia especifica com a API do ERP
 exports.sincronizar = async (req, res) => {
     try {
         const { sequenciaId } = req.params;
 
-        const sequencia = await Sequencia.findById(sequenciaId)
-            .populate({
-                path: 'contrato',
-                populate: { path: 'fornecedor' }
-            });
+        const sequencia = await Sequencia.findByPk(sequenciaId, {
+            include: sequenciaFullInclude
+        });
 
         if (!sequencia) {
-            return res.status(404).json({ message: 'Sequência não encontrada' });
+            return res.status(404).json({ message: 'Sequencia nao encontrada' });
         }
 
         const medicoes = await medicaoService.sincronizarMedicoes(sequencia);
@@ -91,22 +101,22 @@ exports.sincronizar = async (req, res) => {
         // Log de auditoria
         await auditService.logCrud(req, 'SINCRONIZAR', 'MEDICAO', 'Medicao', {
             recursoId: sequenciaId,
-            recursoNome: `Seq ${sequencia['num-seq-item']}`,
-            descricao: `Medicoes sincronizadas: Contrato ${sequencia.contrato?.['nr-contrato']} Seq ${sequencia['num-seq-item']}`,
+            recursoNome: `Seq ${sequencia.num_seq_item}`,
+            descricao: `Medicoes sincronizadas: Contrato ${sequencia.contrato?.nr_contrato} Seq ${sequencia.num_seq_item}`,
             metadados: {
-                contrato: sequencia.contrato?.['nr-contrato'],
-                estabelecimento: sequencia.contrato?.['cod-estabel'],
+                contrato: sequencia.contrato?.nr_contrato,
+                estabelecimento: sequencia.contrato?.cod_estabel,
                 medicoesProcessadas: medicoes.length
             }
         });
 
         res.json({
-            message: 'Sincronização concluída',
+            message: 'Sincronizacao concluida',
             sequencia: {
-                id: sequencia._id,
-                contrato: sequencia.contrato?.['nr-contrato'],
-                estabelecimento: sequencia.contrato?.['cod-estabel'],
-                numSeqItem: sequencia['num-seq-item']
+                id: sequencia.id,
+                contrato: sequencia.contrato?.nr_contrato,
+                estabelecimento: sequencia.contrato?.cod_estabel,
+                numSeqItem: sequencia.num_seq_item
             },
             medicoesProcessadas: medicoes.length,
             medicoes
@@ -116,7 +126,7 @@ exports.sincronizar = async (req, res) => {
     }
 };
 
-// Sincronizar todas as sequências
+// Sincronizar todas as sequencias
 exports.sincronizarTodas = async (req, res) => {
     try {
         const resultados = await medicaoService.sincronizarTodas();
@@ -136,7 +146,7 @@ exports.sincronizarTodas = async (req, res) => {
         });
 
         res.json({
-            message: 'Sincronização em lote concluída',
+            message: 'Sincronizacao em lote concluida',
             total: resultados.length,
             sucessos,
             erros,
@@ -147,54 +157,52 @@ exports.sincronizarTodas = async (req, res) => {
     }
 };
 
-// Buscar status consolidado de uma sequência
+// Buscar status consolidado de uma sequencia
 exports.getStatusConsolidado = async (req, res) => {
     try {
         const { sequenciaId } = req.params;
 
-        const sequencia = await Sequencia.findById(sequenciaId)
-            .populate({
-                path: 'contrato',
-                populate: { path: 'fornecedor' }
-            });
+        const sequencia = await Sequencia.findByPk(sequenciaId, {
+            include: sequenciaFullInclude
+        });
 
         if (!sequencia) {
-            return res.status(404).json({ message: 'Sequência não encontrada' });
+            return res.status(404).json({ message: 'Sequencia nao encontrada' });
         }
 
         const medicoes = await medicaoService.buscarMedicoesLocais(sequenciaId);
 
-        // Agrupar por mês
+        // Agrupar por mes
         const medicoesPerMonth = {};
         medicoes.forEach(med => {
-            const mes = med.mesReferencia;
+            const mes = med.mes_referencia;
             if (!medicoesPerMonth[mes]) {
                 medicoesPerMonth[mes] = [];
             }
             medicoesPerMonth[mes].push({
-                numSeqMedicao: med['num-seq-medicao'],
-                valor: med['val-medicao'],
-                dataMedicao: med['dat-medicao'],
-                dataRecebimento: med['dat-receb'],
-                dataEmissao: med['dat-prev-medicao'],
-                numeroNota: med['numero-nota'],
-                statusRegistro: med.statusRegistro,
-                alertaValor: med.alertaValor,
-                diferencaValor: med.diferencaValor
+                numSeqMedicao: med.num_seq_medicao,
+                valor: med.val_medicao,
+                dataMedicao: med.dat_medicao,
+                dataRecebimento: med.dat_receb,
+                dataEmissao: med.dat_prev_medicao,
+                numeroNota: med.numero_nota,
+                statusRegistro: med.status_registro,
+                alertaValor: med.alerta_valor,
+                diferencaValor: med.diferenca_valor
             });
         });
 
         res.json({
             sequencia: {
-                id: sequencia._id,
+                id: sequencia.id,
                 fornecedor: sequencia.contrato?.fornecedor?.nome,
-                contrato: sequencia.contrato?.['nr-contrato'],
-                estabelecimento: sequencia.contrato?.['cod-estabel'],
-                numSeqItem: sequencia['num-seq-item'],
-                diaEmissao: sequencia.diaEmissao,
+                contrato: sequencia.contrato?.nr_contrato,
+                estabelecimento: sequencia.contrato?.cod_estabel,
+                numSeqItem: sequencia.num_seq_item,
+                diaEmissao: sequencia.dia_emissao,
                 valorEsperado: sequencia.valor
             },
-            statusMensal: Object.fromEntries(sequencia.statusMensal || new Map()),
+            statusMensal: sequencia.status_mensal || {},
             medicoesPerMonth
         });
     } catch (error) {
@@ -205,27 +213,35 @@ exports.getStatusConsolidado = async (req, res) => {
 // Verificar alertas de valor
 exports.getAlertas = async (req, res) => {
     try {
-        const alertas = await Medicao.find({ alertaValor: true })
-            .populate({
-                path: 'sequencia',
-                populate: {
-                    path: 'contrato',
-                    populate: { path: 'fornecedor' }
+        const alertas = await Medicao.findAll({
+            where: { alerta_valor: true },
+            include: [
+                {
+                    model: Sequencia,
+                    as: 'sequencia',
+                    include: [
+                        {
+                            model: Contrato,
+                            as: 'contrato',
+                            include: [{ model: Fornecedor, as: 'fornecedor' }]
+                        }
+                    ]
                 }
-            })
-            .sort({ createdAt: -1 });
+            ],
+            order: [['created_at', 'DESC']]
+        });
 
         res.json(alertas.map(med => ({
-            medicaoId: med._id,
-            sequencia: med.sequencia?.['num-seq-item'],
-            contrato: med.sequencia?.contrato?.['nr-contrato'],
+            medicaoId: med.id,
+            sequencia: med.sequencia?.num_seq_item,
+            contrato: med.sequencia?.contrato?.nr_contrato,
             fornecedor: med.sequencia?.contrato?.fornecedor?.nome,
-            mesReferencia: med.mesReferencia,
+            mesReferencia: med.mes_referencia,
             valorEsperado: med.sequencia?.valor,
-            valorMedicao: med['val-medicao'],
-            diferenca: med.diferencaValor,
-            numeroNota: med['numero-nota'],
-            dataMedicao: med['dat-medicao']
+            valorMedicao: med.val_medicao,
+            diferenca: med.diferenca_valor,
+            numeroNota: med.numero_nota,
+            dataMedicao: med.dat_medicao
         })));
     } catch (error) {
         res.status(500).json({ message: error.message });

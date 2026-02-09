@@ -168,10 +168,10 @@ function UsuariosTab({ showToast }) {
     setFormData({
       usuario: usuario.usuario || '',
       email: usuario.email || '',
-      perfil: usuario.perfil?._id || '',
+      perfil: usuario.perfil?.id || '',
       ativo: usuario.ativo
     });
-    setEditingId(usuario._id);
+    setEditingId(usuario.id);
     setIsModalOpen(true);
   };
 
@@ -316,7 +316,7 @@ function UsuariosTab({ showToast }) {
               </thead>
               <tbody>
                 {filteredUsuarios.map((usuario) => (
-                  <tr key={usuario._id} className="hover:bg-base-200/20 transition-colors">
+                  <tr key={usuario.id} className="hover:bg-base-200/20 transition-colors">
                     <td className="font-semibold">{usuario.usuario}</td>
                     <td className="text-base-content/70">{usuario.email}</td>
                     <td>
@@ -325,14 +325,14 @@ function UsuariosTab({ showToast }) {
                     <td className="text-center">
                       <button
                         className={`badge cursor-pointer ${usuario.ativo ? 'badge-success' : 'badge-error'}`}
-                        onClick={() => handleToggleAtivo(usuario._id)}
+                        onClick={() => handleToggleAtivo(usuario.id)}
                       >
                         {usuario.ativo ? 'Ativo' : 'Inativo'}
                       </button>
                     </td>
                     <td>
                       <div className="flex justify-end gap-1">
-                        <button className="btn btn-ghost btn-sm btn-square" onClick={() => openPasswordModal(usuario._id)} title="Alterar Senha">
+                        <button className="btn btn-ghost btn-sm btn-square" onClick={() => openPasswordModal(usuario.id)} title="Alterar Senha">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                           </svg>
@@ -342,7 +342,7 @@ function UsuariosTab({ showToast }) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
-                        <button className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onClick={() => openDeleteDialog(usuario._id)} title="Excluir">
+                        <button className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onClick={() => openDeleteDialog(usuario.id)} title="Excluir">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -392,7 +392,7 @@ function UsuariosTab({ showToast }) {
             <select className="select select-bordered w-full" value={formData.perfil} onChange={(e) => setFormData({ ...formData, perfil: e.target.value })}>
               <option value="">Sem perfil</option>
               {perfis.map((p) => (
-                <option key={p._id} value={p._id}>{p.nome} {p.isAdmin && '(Admin)'}</option>
+                <option key={p.id} value={p.id}>{p.nome} {p.isAdmin && '(Admin)'}</option>
               ))}
             </select>
           </FormField>
@@ -494,7 +494,7 @@ function PerfisTab({ showToast }) {
       isAdmin: perfil.isAdmin || false,
       ativo: perfil.ativo
     });
-    setEditingId(perfil._id);
+    setEditingId(perfil.id);
     setIsModalOpen(true);
   };
 
@@ -578,7 +578,7 @@ function PerfisTab({ showToast }) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPerfis.map((perfil) => (
-            <div key={perfil._id} className="glass-card p-5">
+            <div key={perfil.id} className="glass-card p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -624,7 +624,7 @@ function PerfisTab({ showToast }) {
                   </svg>
                   Editar
                 </button>
-                <button className="btn btn-ghost btn-sm text-error hover:bg-error/10" onClick={() => { setDeletingId(perfil._id); setIsDeleteDialogOpen(true); }}>
+                <button className="btn btn-ghost btn-sm text-error hover:bg-error/10" onClick={() => { setDeletingId(perfil.id); setIsDeleteDialogOpen(true); }}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -874,9 +874,9 @@ function AuditoriaTab({ showToast }) {
   };
 
   const renderCamposAlterados = (log) => {
-    if (!log.dadosAnteriores && !log.dadosNovos) return null;
+    if (!log.dados_anteriores && !log.dados_novos) return null;
 
-    const campos = log.camposAlterados || [];
+    const campos = log.campos_alterados || [];
     if (campos.length === 0) return null;
 
     return (
@@ -896,10 +896,10 @@ function AuditoriaTab({ showToast }) {
                 <tr key={campo}>
                   <td className="font-medium">{campo}</td>
                   <td className="text-error/70">
-                    {JSON.stringify(log.dadosAnteriores?.[campo]) || '-'}
+                    {JSON.stringify(log.dados_anteriores?.[campo]) || '-'}
                   </td>
                   <td className="text-success/70">
-                    {JSON.stringify(log.dadosNovos?.[campo]) || '-'}
+                    {JSON.stringify(log.dados_novos?.[campo]) || '-'}
                   </td>
                 </tr>
               ))}
@@ -1043,9 +1043,9 @@ function AuditoriaTab({ showToast }) {
                 </tr>
               ) : (
                 logs.map((log) => (
-                  <tr key={log._id} className="hover:bg-base-200/20 transition-colors">
-                    <td className="text-xs whitespace-nowrap">{formatarData(log.createdAt)}</td>
-                    <td className="font-medium">{log.usuarioNome || 'Sistema'}</td>
+                  <tr key={log.id} className="hover:bg-base-200/20 transition-colors">
+                    <td className="text-xs whitespace-nowrap">{formatarData(log.created_at)}</td>
+                    <td className="font-medium">{log.usuario_nome || 'Sistema'}</td>
                     <td className="text-sm">{log.acao?.replace(/_/g, ' ')}</td>
                     <td>
                       <span className="badge badge-ghost badge-sm">{log.categoria}</span>
@@ -1115,13 +1115,13 @@ function AuditoriaTab({ showToast }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-base-content/50">Data/Hora</label>
-                <p className="font-medium">{formatarData(logSelecionado.createdAt)}</p>
+                <p className="font-medium">{formatarData(logSelecionado.created_at)}</p>
               </div>
               <div>
                 <label className="text-xs text-base-content/50">Usuario</label>
-                <p className="font-medium">{logSelecionado.usuarioNome || 'Sistema'}</p>
-                {logSelecionado.usuarioEmail && (
-                  <p className="text-sm text-base-content/60">{logSelecionado.usuarioEmail}</p>
+                <p className="font-medium">{logSelecionado.usuario_nome || 'Sistema'}</p>
+                {logSelecionado.usuario_email && (
+                  <p className="text-sm text-base-content/60">{logSelecionado.usuario_email}</p>
                 )}
               </div>
               <div>
@@ -1141,8 +1141,8 @@ function AuditoriaTab({ showToast }) {
               <div>
                 <label className="text-xs text-base-content/50">Recurso</label>
                 <p className="font-medium">{logSelecionado.recurso}</p>
-                {logSelecionado.recursoId && (
-                  <p className="text-xs text-base-content/50">ID: {logSelecionado.recursoId}</p>
+                {logSelecionado.recurso_id && (
+                  <p className="text-xs text-base-content/50">ID: {logSelecionado.recurso_id}</p>
                 )}
               </div>
             </div>
@@ -1154,48 +1154,48 @@ function AuditoriaTab({ showToast }) {
               </div>
             )}
 
-            {logSelecionado.enderecoIp && (
+            {logSelecionado.endereco_ip && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-base-content/50">Endereco IP</label>
-                  <p className="font-mono text-sm">{logSelecionado.enderecoIp}</p>
+                  <p className="font-mono text-sm">{logSelecionado.endereco_ip}</p>
                 </div>
-                {logSelecionado.userAgent && (
+                {logSelecionado.user_agent && (
                   <div>
                     <label className="text-xs text-base-content/50">User Agent</label>
-                    <p className="text-xs text-base-content/60 truncate" title={logSelecionado.userAgent}>
-                      {logSelecionado.userAgent}
+                    <p className="text-xs text-base-content/60 truncate" title={logSelecionado.user_agent}>
+                      {logSelecionado.user_agent}
                     </p>
                   </div>
                 )}
               </div>
             )}
 
-            {!logSelecionado.sucesso && logSelecionado.mensagemErro && (
+            {!logSelecionado.sucesso && logSelecionado.mensagem_erro && (
               <div className="alert alert-error">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>{logSelecionado.mensagemErro}</span>
+                <span>{logSelecionado.mensagem_erro}</span>
               </div>
             )}
 
             {renderCamposAlterados(logSelecionado)}
 
-            {logSelecionado.dadosAnteriores && (
+            {logSelecionado.dados_anteriores && (
               <div>
                 <label className="text-xs text-base-content/50">Dados Anteriores</label>
                 <pre className="p-2 bg-base-200/30 rounded text-xs overflow-x-auto">
-                  {JSON.stringify(logSelecionado.dadosAnteriores, null, 2)}
+                  {JSON.stringify(logSelecionado.dados_anteriores, null, 2)}
                 </pre>
               </div>
             )}
 
-            {logSelecionado.dadosNovos && (
+            {logSelecionado.dados_novos && (
               <div>
                 <label className="text-xs text-base-content/50">Dados Novos</label>
                 <pre className="p-2 bg-base-200/30 rounded text-xs overflow-x-auto">
-                  {JSON.stringify(logSelecionado.dadosNovos, null, 2)}
+                  {JSON.stringify(logSelecionado.dados_novos, null, 2)}
                 </pre>
               </div>
             )}
@@ -1218,12 +1218,12 @@ function EmpresasTab({ showToast }) {
   // Modal de empresa
   const [isEmpresaModalOpen, setIsEmpresaModalOpen] = useState(false);
   const [editingEmpresaId, setEditingEmpresaId] = useState(null);
-  const [empresaForm, setEmpresaForm] = useState({ codEmpresa: '', nome: '' });
+  const [empresaForm, setEmpresaForm] = useState({ cod_empresa: '', nome: '' });
 
   // Modal de estabelecimento
   const [isEstabelecimentoModalOpen, setIsEstabelecimentoModalOpen] = useState(false);
   const [editingEstabelecimentoId, setEditingEstabelecimentoId] = useState(null);
-  const [estabelecimentoForm, setEstabelecimentoForm] = useState({ empresa: '', codEstabel: '', nome: '' });
+  const [estabelecimentoForm, setEstabelecimentoForm] = useState({ empresa: '', cod_estabel: '', nome: '' });
 
   // Delete dialogs
   const [isDeleteEmpresaDialogOpen, setIsDeleteEmpresaDialogOpen] = useState(false);
@@ -1254,26 +1254,26 @@ function EmpresasTab({ showToast }) {
 
   const getEstabelecimentoCount = (empresaId) => {
     return estabelecimentos.filter(e => {
-      const eId = e.empresa?._id || e.empresa;
+      const eId = e.empresa?.id || e.empresa;
       return eId === empresaId;
     }).length;
   };
 
   // ========== EMPRESA ==========
   const openCreateEmpresaModal = () => {
-    setEmpresaForm({ codEmpresa: '', nome: '' });
+    setEmpresaForm({ cod_empresa: '', nome: '' });
     setEditingEmpresaId(null);
     setIsEmpresaModalOpen(true);
   };
 
   const openEditEmpresaModal = (empresa) => {
-    setEmpresaForm({ codEmpresa: empresa.codEmpresa || '', nome: empresa.nome || '' });
-    setEditingEmpresaId(empresa._id);
+    setEmpresaForm({ cod_empresa: empresa.cod_empresa || '', nome: empresa.nome || '' });
+    setEditingEmpresaId(empresa.id);
     setIsEmpresaModalOpen(true);
   };
 
   const handleEmpresaSubmit = async () => {
-    if (!empresaForm.codEmpresa.trim() || !empresaForm.nome.trim()) {
+    if (!empresaForm.cod_empresa.trim() || !empresaForm.nome.trim()) {
       showToast('Codigo e nome sao obrigatorios', 'warning');
       return;
     }
@@ -1307,23 +1307,23 @@ function EmpresasTab({ showToast }) {
 
   // ========== ESTABELECIMENTO ==========
   const openCreateEstabelecimentoModal = () => {
-    setEstabelecimentoForm({ empresa: empresas[0]?._id || '', codEstabel: '', nome: '' });
+    setEstabelecimentoForm({ empresa: empresas[0]?.id || '', cod_estabel: '', nome: '' });
     setEditingEstabelecimentoId(null);
     setIsEstabelecimentoModalOpen(true);
   };
 
   const openEditEstabelecimentoModal = (estabelecimento) => {
     setEstabelecimentoForm({
-      empresa: estabelecimento.empresa?._id || estabelecimento.empresa || '',
-      codEstabel: estabelecimento.codEstabel || '',
+      empresa: estabelecimento.empresa?.id || estabelecimento.empresa || '',
+      cod_estabel: estabelecimento.cod_estabel || '',
       nome: estabelecimento.nome || ''
     });
-    setEditingEstabelecimentoId(estabelecimento._id);
+    setEditingEstabelecimentoId(estabelecimento.id);
     setIsEstabelecimentoModalOpen(true);
   };
 
   const handleEstabelecimentoSubmit = async () => {
-    if (!estabelecimentoForm.empresa || !estabelecimentoForm.codEstabel.trim() || !estabelecimentoForm.nome.trim()) {
+    if (!estabelecimentoForm.empresa || !estabelecimentoForm.cod_estabel.trim() || !estabelecimentoForm.nome.trim()) {
       showToast('Empresa, codigo e nome sao obrigatorios', 'warning');
       return;
     }
@@ -1357,12 +1357,12 @@ function EmpresasTab({ showToast }) {
 
   const filteredEmpresas = empresas.filter(e =>
     e.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.codEmpresa?.toLowerCase().includes(searchTerm.toLowerCase())
+    e.cod_empresa?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredEstabelecimentos = estabelecimentos.filter(e =>
     e.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.codEstabel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.cod_estabel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.empresa?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -1439,12 +1439,12 @@ function EmpresasTab({ showToast }) {
                   </thead>
                   <tbody>
                     {filteredEmpresas.map((empresa) => (
-                      <tr key={empresa._id} className="hover:bg-base-200/20 transition-colors">
-                        <td className="font-mono font-semibold">{empresa.codEmpresa}</td>
+                      <tr key={empresa.id} className="hover:bg-base-200/20 transition-colors">
+                        <td className="font-mono font-semibold">{empresa.cod_empresa}</td>
                         <td className="font-semibold">{empresa.nome}</td>
                         <td className="text-center">
-                          <span className={`badge ${getEstabelecimentoCount(empresa._id) > 0 ? 'badge-primary' : 'badge-ghost'}`}>
-                            {getEstabelecimentoCount(empresa._id)}
+                          <span className={`badge ${getEstabelecimentoCount(empresa.id) > 0 ? 'badge-primary' : 'badge-ghost'}`}>
+                            {getEstabelecimentoCount(empresa.id)}
                           </span>
                         </td>
                         <td className="text-center">
@@ -1459,7 +1459,7 @@ function EmpresasTab({ showToast }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
-                            <button className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onClick={() => { setDeletingEmpresaId(empresa._id); setIsDeleteEmpresaDialogOpen(true); }} title="Excluir">
+                            <button className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onClick={() => { setDeletingEmpresaId(empresa.id); setIsDeleteEmpresaDialogOpen(true); }} title="Excluir">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
@@ -1505,12 +1505,12 @@ function EmpresasTab({ showToast }) {
                   </thead>
                   <tbody>
                     {filteredEstabelecimentos.map((estabelecimento) => (
-                      <tr key={estabelecimento._id} className="hover:bg-base-200/20 transition-colors">
-                        <td className="font-mono font-semibold">{estabelecimento.codEstabel}</td>
+                      <tr key={estabelecimento.id} className="hover:bg-base-200/20 transition-colors">
+                        <td className="font-mono font-semibold">{estabelecimento.cod_estabel}</td>
                         <td className="font-semibold">{estabelecimento.nome}</td>
                         <td>
                           <span className="badge badge-outline">
-                            {estabelecimento.empresa?.codEmpresa} - {estabelecimento.empresa?.nome}
+                            {estabelecimento.empresa?.cod_empresa} - {estabelecimento.empresa?.nome}
                           </span>
                         </td>
                         <td className="text-center">
@@ -1525,7 +1525,7 @@ function EmpresasTab({ showToast }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
-                            <button className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onClick={() => { setDeletingEstabelecimentoId(estabelecimento._id); setIsDeleteEstabelecimentoDialogOpen(true); }} title="Excluir">
+                            <button className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onClick={() => { setDeletingEstabelecimentoId(estabelecimento.id); setIsDeleteEstabelecimentoDialogOpen(true); }} title="Excluir">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
@@ -1562,7 +1562,7 @@ function EmpresasTab({ showToast }) {
       >
         <div className="space-y-4">
           <FormField label="Codigo da Empresa" required>
-            <input type="text" className="input input-bordered w-full" value={empresaForm.codEmpresa} onChange={(e) => setEmpresaForm({ ...empresaForm, codEmpresa: e.target.value })} placeholder="Ex: 01" autoFocus />
+            <input type="text" className="input input-bordered w-full" value={empresaForm.cod_empresa} onChange={(e) => setEmpresaForm({ ...empresaForm, cod_empresa: e.target.value })} placeholder="Ex: 01" autoFocus />
           </FormField>
           <FormField label="Nome da Empresa" required>
             <input type="text" className="input input-bordered w-full" value={empresaForm.nome} onChange={(e) => setEmpresaForm({ ...empresaForm, nome: e.target.value })} placeholder="Ex: PROMA BRASIL" />
@@ -1590,12 +1590,12 @@ function EmpresasTab({ showToast }) {
             <select className="select select-bordered w-full" value={estabelecimentoForm.empresa} onChange={(e) => setEstabelecimentoForm({ ...estabelecimentoForm, empresa: e.target.value })}>
               <option value="">Selecione uma empresa</option>
               {empresas.map((empresa) => (
-                <option key={empresa._id} value={empresa._id}>{empresa.codEmpresa} - {empresa.nome}</option>
+                <option key={empresa.id} value={empresa.id}>{empresa.cod_empresa} - {empresa.nome}</option>
               ))}
             </select>
           </FormField>
           <FormField label="Codigo do Estabelecimento" required>
-            <input type="text" className="input input-bordered w-full" value={estabelecimentoForm.codEstabel} onChange={(e) => setEstabelecimentoForm({ ...estabelecimentoForm, codEstabel: e.target.value })} placeholder="Ex: 01" />
+            <input type="text" className="input input-bordered w-full" value={estabelecimentoForm.cod_estabel} onChange={(e) => setEstabelecimentoForm({ ...estabelecimentoForm, cod_estabel: e.target.value })} placeholder="Ex: 01" />
           </FormField>
           <FormField label="Nome do Estabelecimento" required>
             <input type="text" className="input input-bordered w-full" value={estabelecimentoForm.nome} onChange={(e) => setEstabelecimentoForm({ ...estabelecimentoForm, nome: e.target.value })} placeholder="Ex: PROMA CONTAGEM" />

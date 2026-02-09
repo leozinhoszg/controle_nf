@@ -43,7 +43,7 @@ export default function Fornecedores() {
 
   const getContratoCount = (fornecedorId) => {
     return contratos.filter(c => {
-      const fId = c.fornecedor?._id || c.fornecedor;
+      const fId = c.fornecedor?.id || c.fornecedor;
       return fId === fornecedorId;
     }).length;
   };
@@ -56,7 +56,7 @@ export default function Fornecedores() {
 
   const openEditModal = (fornecedor) => {
     setNome(fornecedor.nome || '');
-    setEditingId(fornecedor._id);
+    setEditingId(fornecedor.id);
     setIsModalOpen(true);
   };
 
@@ -262,7 +262,7 @@ export default function Fornecedores() {
             <div>
               <p className="text-xs text-base-content/50 font-medium">Com Contratos</p>
               <p className="text-2xl font-bold text-success mt-0.5">
-                {fornecedores.filter(f => getContratoCount(f._id) > 0).length}
+                {fornecedores.filter(f => getContratoCount(f.id) > 0).length}
               </p>
               <p className="text-xs text-base-content/40">ativos</p>
             </div>
@@ -279,7 +279,7 @@ export default function Fornecedores() {
             <div>
               <p className="text-xs text-base-content/50 font-medium">Sem Contratos</p>
               <p className="text-2xl font-bold text-warning mt-0.5">
-                {fornecedores.filter(f => getContratoCount(f._id) === 0).length}
+                {fornecedores.filter(f => getContratoCount(f.id) === 0).length}
               </p>
               <p className="text-xs text-base-content/40">sem vínculo</p>
             </div>
@@ -347,10 +347,10 @@ export default function Fornecedores() {
                 </thead>
                 <tbody>
                   {filteredFornecedores.map((fornecedor, idx) => {
-                    const contratoCount = getContratoCount(fornecedor._id);
+                    const contratoCount = getContratoCount(fornecedor.id);
                     return (
                       <tr
-                        key={fornecedor._id}
+                        key={fornecedor.id}
                         className="hover:bg-base-200/30 group/row"
                         style={{
                           animation: 'fadeInUp 0.3s ease forwards',
@@ -390,7 +390,7 @@ export default function Fornecedores() {
                             </button>
                             <button
                               className="btn btn-ghost btn-sm btn-square opacity-60 hover:opacity-100 text-error hover:bg-error/10 transition-all"
-                              onClick={() => openDeleteDialog(fornecedor._id)}
+                              onClick={() => openDeleteDialog(fornecedor.id)}
                               title="Excluir"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
